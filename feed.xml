@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.7.2">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2018-02-11T10:55:39+13:00</updated><id>http://localhost:4000/</id><title type="html">读源码</title><subtitle>读源码</subtitle><entry><title type="html">读fody.PropertyChanged源码（1）：TypeNode类型</title><link href="http://localhost:4000/fody.propertychanged/2018/02/07/fody.PropertyChanged.part1.html" rel="alternate" type="text/html" title="读fody.PropertyChanged源码（1）：TypeNode类型" /><published>2018-02-07T00:00:00+13:00</published><updated>2018-02-07T00:00:00+13:00</updated><id>http://localhost:4000/fody.propertychanged/2018/02/07/fody.PropertyChanged.part1</id><content type="html" xml:base="http://localhost:4000/fody.propertychanged/2018/02/07/fody.PropertyChanged.part1.html">&lt;h1 id=&quot;typenode类&quot;&gt;&lt;strong&gt;TypeNode类&lt;/strong&gt;&lt;/h1&gt;
+
+&lt;p&gt;TypeNode类是fody.PropertyChanged中的核心类型，fody.PropertyChanged是
+根据这个类型的对象中记录的信息，来对用户指定的自定义类型进行必要的代码注入。&lt;/p&gt;
+
+&lt;div class=&quot;language-csharp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;// PropertyChanged\PropertyChanged.Fody\TypeNode.cs&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;TypeNode&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TypeDefintion&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TypeDefinition&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TypeNode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Nodes&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PropertyDependency&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PropertyDependencies&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;MemberMapping&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Mappings&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;EventInvokerMethod&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;EventInvoker&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MethodReference&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IsChangedInvoker&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PropertyData&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PropertyDatas&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;OnChangedMethod&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;OnChangedMethods&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PropertyDefintion&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;AllProperties&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;下面简单介绍TypeNode类包含的每个属性，不过在这之前，先看一个用户自定义
+的类型。&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Customer&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;INotifyPropertyChanged&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FirstName&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;set&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;LastName&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;set&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FullName&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;get&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FirstName&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot; &quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;LastName&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IsChanged&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;set&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;OnFirstNameChanged&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;NotifyPropertyChanged&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;propertyName&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PropertyChanged&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;null&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+      &lt;span class=&quot;nf&quot;&gt;PropertyChanged&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;PropertyChangedEventArgs&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;propertyName&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;在fody.PropertyChanged中，一个TypeNode对象代表一个类似上面的用户自定义
+类型，这个TypeNode对象包含了fody.PropertyChanged进行代码注入所需要的
+全部信息。&lt;/p&gt;
+
+&lt;h1 id=&quot;typedefinition&quot;&gt;&lt;strong&gt;TypeDefinition&lt;/strong&gt;&lt;/h1&gt;
+
+&lt;p&gt;TypeDefinition字段表示一个TypeNode对象对应的类，它的类型是Mono.Ceil.TypeDefinition，
+它包含了关于该类的所有信息。&lt;/p&gt;
+
+&lt;h1 id=&quot;nodes&quot;&gt;&lt;strong&gt;Nodes&lt;/strong&gt;&lt;/h1&gt;
+
+&lt;p&gt;Nodes是一个链表，它的元素是TypeNode类，它表示继承该类的所有子类。注意，
+因为其元素也是TypeNode类，所以每个子TypeNode又可能包含它自己的子类，
+从而形成一个继承链。&lt;/p&gt;
+
+&lt;h1 id=&quot;propertydependencies&quot;&gt;&lt;strong&gt;PropertyDependencies&lt;/strong&gt;&lt;/h1&gt;
+
+&lt;p&gt;往往用户自定义的类型中的属性之间会存在直接或间接的依赖关系。例如，在
+Customer类中FullName属性的值依赖于FirstName属性的值和LastName属性的值，
+当它们任意一个的值发生变化时，FullName属性的值也会发生变化。&lt;/p&gt;
+
+&lt;p&gt;这种属性之间的依赖关系在TypeNode类中用PropertyDependencies数组表示，
+该数组的元素是PropertyDependency类。&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;c1&quot;&gt;// PropertyChanged\PropertyChanged.Fody\TypeNode.csPropertyDependency.cs&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;PropertyDependency&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PropertyDefinition&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ShouldAlsoNotifyFor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PropertyDefinition&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;WhenPropertyIsSet&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;其中，WhenPropertyIsSet字段表示被依赖的属性，而ShouldAlsoNotifyFor字段
+表示依赖于这个被依赖的属性的属性。它们的类型都是Mono.Cecil.PropertyDefinition，
+它包含了关于类属性的所有信息。&lt;/p&gt;
+
+&lt;h1 id=&quot;mappings&quot;&gt;&lt;strong&gt;Mappings&lt;/strong&gt;&lt;/h1&gt;
+
+&lt;p&gt;实际上，属性在类中的意义是对类字段的封装，它将字段对外开放的同时，也确保
+了安全性。我们可以显式的声明一个字段，然后再声明一个属性对它进行包装，
+也可以只声明一个属性，像字段一样使用它，例如Customer类的FirstName属性。&lt;/p&gt;
+
+&lt;p&gt;事实上，对于第二种情况，编译器会自动为这个属性创建一个字段，再用这个属性
+对它包装。所以，在一个类中，一个属性在大部分的情况下会对应一个字段。&lt;/p&gt;
+
+&lt;p&gt;Mappings数组包含了一个类中属性与它包装的字段的对应关系。它的元素的类型是
+MemberMapping。&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;c1&quot;&gt;// PropertyChanged\PropertyChanged.Fody\MemberMapping.cs&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;MemberMapping&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PropertyDefinition&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PropertyDefinition&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FieldDefinition&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FieldDefinition&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;其中，PropertyDefinition字段对应类的属性，FieldDefinition字段对应类的字段。&lt;/p&gt;
+
+&lt;p&gt;从上面的Customer例子可以看出，一个属性通常对应着一个字段，所以Mapping
+数组记录了类中的所有属性与字段的对应关系。&lt;/p&gt;
+
+&lt;h1 id=&quot;eventinvoker&quot;&gt;&lt;strong&gt;EventInvoker&lt;/strong&gt;&lt;/h1&gt;
+
+&lt;p&gt;当一个类的对象的任意一个属性发生变化时，我们需要调用NotifyPropertyChanged()
+方法来通知这个变化。使用fody.PropertyChanged的目的就是期望它为我们做这件
+事情，但为了达到这个目的，它必须知道这个NotifyPropertyChanged()的方法的
+存在，然后充分的了解这个方法。&lt;/p&gt;
+
+&lt;p&gt;EventInvoker字段记录了这个NotifyPropertyChanged()方法的信息，它的类型是
+EventInvokerMethod。&lt;/p&gt;
+
+&lt;p&gt;注意，我虽然一直使用NotifyPropertyChanged这个名字，但这个方法可以有其他
+的名字。&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;c1&quot;&gt;// PropertyChanged\PropertyChanged.Fody\EventInvokerMethod.cs&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;EventInvokerMethod&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MethodReference&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MethodReference&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;InvokerTypes&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;InvokerType&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IsVisibleFromChildren&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;其中，MethodReference字段保存这个NotifyPropertyChanged()方法的引用，它是类型
+是Mono.Ceil.MethodReference，该类型包含了这个方法的所有信息。&lt;/p&gt;
+
+&lt;p&gt;InvokerType字段是被引用的方法的类型，fody.PropertyChanged支持五种不同的
+NotifyPropertyChanged()方法，它们的区别在于传入的参数的不同。InvokerType
+字段的类型是一个枚举类型。&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;c1&quot;&gt;// PropertyChanged\PropertyChanged.Fody\InvokerTypes.cs&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;enum&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;InvokerTypes&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;BeforeAfter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;BeforeAfterGeneric&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;PropertyChangedArg&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;SenderPropertyChangedArg&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;它们对应的函数签名是：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;NotifyPropertyChanged(string propertyName)&lt;/li&gt;
+  &lt;li&gt;NotifyPropertyChanged(string propertyName, object beforeValue, object afterValue)&lt;/li&gt;
+  &lt;li&gt;NotifyPropertyChanged&lt;T&gt;(string propertyName, T beforeValue, T afterValue)&lt;/T&gt;&lt;/li&gt;
+  &lt;li&gt;NotifyPropertyChanged(PropertyChangedEventArgs arg)&lt;/li&gt;
+  &lt;li&gt;NotifyPropertyChanged(obejct sender, PropertyChangedEventArgs arg)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&quot;ischangedinvoker&quot;&gt;&lt;strong&gt;IsChangedInvoker&lt;/strong&gt;&lt;/h1&gt;
+
+&lt;p&gt;在上面的例子中，Customer类有一个IsChanged属性，我们希望每当这个类的其他
+任意一个属性的值被修改时，这个属性的值会变成true。IsChangedInvoker字段引用
+的就是这个IsChanged属性的setter。&lt;/p&gt;
+
+&lt;p&gt;注意，这里需要用户在类中自行添加IsChanged属性，如果用户创建的类中没有
+这个属性，这个IsChangedInvoker字段将为null。&lt;/p&gt;
+
+&lt;h1 id=&quot;propertydatas&quot;&gt;&lt;strong&gt;PropertyDatas&lt;/strong&gt;&lt;/h1&gt;
+
+&lt;p&gt;在上面的例子中，Customer类只有一个FirstName属性，当它被修改时，它的setter
+应该调用NotifyPropertyChanged()方法通知该属性值的变化。当然，我们需要创建
+的类可能不止一个属性，当其中一个属性的值被修改时，可以同样调用
+NotifyPropertyChanged()方法。&lt;/p&gt;
+
+&lt;p&gt;当fody.PropertyChanged进行代码的注入时，它需要知道目标属性的setter的引用，
+然后在其中注入调用NotifyPropertyChanged()方法的代码，因此这需要它对每个
+属性的setter有一定的了解，这些信息保存在PropertyDatas数组中。&lt;/p&gt;
+
+&lt;p&gt;PropertyDatas数组的元素的类型是PropertyData，其中的每个元素对应着类中的
+其中一个属性的setter。&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;c1&quot;&gt;// PropertyChanged\PropertyChanged.Fody\PropertyData.cs&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;PropertyData&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FieldReference&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;BackingFieldReference&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PropertyDefinition&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;AlsoNotifyFor&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PropertyDefinition&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;();&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PropertyDefinition&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PropertyDefinition&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;AlreadyNotifies&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;();&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;在一个PropertyData对象中，PropertyDefinition字段是该对象对应的属性。
+BackingFieldReference字段代表该属性对应的字段。AlsoNotifyFor数组包含着当
+该对象对应的属性的值有变化时需要通知的依赖于该属性的属性。AlreadyNotifies
+数组记录了该对应对象的属性的setter已经显式声明了的要通知的属性的名字。&lt;/p&gt;
+
+&lt;h1 id=&quot;onchangedmethods&quot;&gt;&lt;strong&gt;OnChangedMethods&lt;/strong&gt;&lt;/h1&gt;
+
+&lt;p&gt;在Customer类中，有一个OnFirstNameChanged()方法，每当FirstName属性的值
+改变时，我们希望调用该方法来通知该属性的变化。实际上，我们可以为类中的
+每个属性都定义类似的方法。&lt;/p&gt;
+
+&lt;p&gt;当一个类中存在名字以On开头和Changed结尾的方法，同时On和Changed之间是一个
+存在的属性名时，该方法会被fody.PropertyChanged添加在该类对应的节点对象的
+OnChangedMethods数组中。&lt;/p&gt;
+
+&lt;p&gt;OnChangedMethod数组的元素的类型是OnChangedMethod。&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;c1&quot;&gt;// PropertyChanged\PropertyChanged.Fody\OnChangedMethod.cs&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;OnChangedMethod&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MethodReference&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MethodReference&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;OnChangedTypes&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;OnChangedTypes&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;其中，MethodReference字段是一个OnPropertyChanged()方法的引用。OnChangedTypes
+字段表示这个方法的签名类型，它的类型是一个枚举类。&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csharp&quot; data-lang=&quot;csharp&quot;&gt;&lt;span class=&quot;c1&quot;&gt;// PropertyChanged\PropertyChanged.Fody\OnChangedMethod.cs&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;enum&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;OnChangedTypes&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;NoArg&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;BeforeAfter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;它们对应的函数签名是：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;OnPropertyChanged()&lt;/li&gt;
+  &lt;li&gt;OnProeprtyChanged(object before, object after)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;当fody.PropertyChanged为每个属性的setter注入代码时，它会尝试寻找当前
+属性是否存在这么一个方法，如果有就注入调用该方法的代码。&lt;/p&gt;
+
+&lt;h1 id=&quot;allproperties&quot;&gt;&lt;strong&gt;AllProperties&lt;/strong&gt;&lt;/h1&gt;
+
+&lt;p&gt;AllProperties数组记录了一个TypeNode对象对应的类中的所有属性。对于一个子节点，
+它不仅包含了它本身对应的类中的所有属性，另外还包含了它的父节点对应的类中
+的所有属性。&lt;/p&gt;</content><author><name></name></author><summary type="html">TypeNode类</summary></entry></feed>
