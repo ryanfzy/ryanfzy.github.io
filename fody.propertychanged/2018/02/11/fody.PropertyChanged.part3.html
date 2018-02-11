@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Begin Jekyll SEO tag v2.4.0 -->
+<title>读fody.PropertyChanged源码（3）：AddINotifyPropetyChangedInterfaceAttribute特性 | 读源码</title>
+<meta name="generator" content="Jekyll v3.7.2" />
+<meta property="og:title" content="读fody.PropertyChanged源码（3）：AddINotifyPropetyChangedInterfaceAttribute特性" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="一般情况下，如果一个类实现了INotifyPropertyChanged接口，fody.PropertyChanged 会自动为该类的所有属性的setter中注入类似OnPropertyChanged的代码。" />
+<meta property="og:description" content="一般情况下，如果一个类实现了INotifyPropertyChanged接口，fody.PropertyChanged 会自动为该类的所有属性的setter中注入类似OnPropertyChanged的代码。" />
+<link rel="canonical" href="http://localhost:4000/fody.propertychanged/2018/02/11/fody.PropertyChanged.part3.html" />
+<meta property="og:url" content="http://localhost:4000/fody.propertychanged/2018/02/11/fody.PropertyChanged.part3.html" />
+<meta property="og:site_name" content="读源码" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2018-02-11T00:00:00+13:00" />
+<script type="application/ld+json">
+{"description":"一般情况下，如果一个类实现了INotifyPropertyChanged接口，fody.PropertyChanged 会自动为该类的所有属性的setter中注入类似OnPropertyChanged的代码。","@type":"BlogPosting","url":"http://localhost:4000/fody.propertychanged/2018/02/11/fody.PropertyChanged.part3.html","headline":"读fody.PropertyChanged源码（3）：AddINotifyPropetyChangedInterfaceAttribute特性","dateModified":"2018-02-11T00:00:00+13:00","datePublished":"2018-02-11T00:00:00+13:00","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/fody.propertychanged/2018/02/11/fody.PropertyChanged.part3.html"},"@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+  <link rel="stylesheet" href="/assets/main.css">
+  <link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="读源码" />
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" rel="author" href="/">读源码</a>
+
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+            <a class="page-link" href="/about/">About</a>
+            
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">读fody.PropertyChanged源码（3）：AddINotifyPropetyChangedInterfaceAttribute特性</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2018-02-11T00:00:00+13:00" itemprop="datePublished">
+        
+        Feb 11, 2018
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>一般情况下，如果一个类实现了INotifyPropertyChanged接口，fody.PropertyChanged
+会自动为该类的所有属性的setter中注入类似OnPropertyChanged的代码。</p>
+
+<p>fody.PropertyChanged会忽略那些没有实现该接口的类。</p>
+
+<p>但如果我们不想为一个类手动实现INotifyProeprtyChanged接口，但还是希望
+fody.PropertyChanged为它进行必要的代码注入，我们可以为该类添加
+AddINotifyPropetyChangedInterfaceAttribute特性。</p>
+
+<p>fody.PropertyChanged会帮你为这些拥有该特性的类自动实现INotifyPropertyChanged
+接口，之后它们就符合了被进行代码注入的条件。</p>
+
+<p>即它帮你省略了手动实现INotidyPropertyChanged接口这一步。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">void</span> <span class="nf">InjectINotifyPropertyChangedInterface</span><span class="p">(</span><span class="n">TypeDefinition</span> <span class="n">targetType</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">targetType</span><span class="p">.</span><span class="n">Interfaces</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="k">new</span> <span class="nf">InterfaceImplementation</span><span class="p">(</span><span class="n">PropChangedInterfaceReference</span><span class="p">));</span>
+  <span class="nf">WeaveEvent</span><span class="p">(</span><span class="n">targetType</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">void</span> <span class="nf">WeaveEvent</span><span class="p">(</span><span class="n">TypeDefinition</span> <span class="n">type</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="kt">var</span> <span class="n">propertyChangedFieldDef</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FieldDefinition</span><span class="p">(</span><span class="s">"PropertyChanged"</span><span class="p">,</span> <span class="n">FieldAttributes</span><span class="p">.</span><span class="n">Private</span> <span class="p">|</span> <span class="n">FieldAttributes</span><span class="p">.</span><span class="n">NotSerialized</span><span class="p">,</span> <span class="n">PropChangedHandlerReference</span><span class="p">);</span>
+  <span class="n">type</span><span class="p">.</span><span class="n">Fields</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">propertyChangedFieldDef</span><span class="p">);</span>
+  <span class="kt">var</span> <span class="n">PropertyChangedField</span> <span class="p">=</span> <span class="n">propertyChangedFieldDef</span><span class="p">.</span><span class="nf">GetGeneric</span><span class="p">();</span>
+  <span class="kt">var</span> <span class="n">eventDefinition</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">EventDefinition</span><span class="p">(</span><span class="s">"PropertyChanged"</span><span class="p">,</span> <span class="n">EventAttributes</span><span class="p">.</span><span class="n">None</span><span class="p">,</span> <span class="n">PropChangedHandlerReference</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">AddMethod</span> <span class="p">=</span> <span class="nf">CreateEventMethod</span><span class="p">(</span><span class="s">"add_PropertyChanged"</span><span class="p">,</span> <span class="n">DelegateCombineMethodRef</span><span class="p">,</span> <span class="n">propertyChangedField</span><span class="p">),</span>
+    <span class="n">RemoveMethod</span> <span class="p">=</span> <span class="nf">CreateEventMethod</span><span class="p">(</span><span class="s">"remove_PropertyChanged"</span><span class="p">,</span> <span class="n">DelegateRemoveMethodRef</span><span class="p">,</span> <span class="n">propertyChangedField</span><span class="p">)</span>
+  <span class="p">};</span>
+  <span class="n">type</span><span class="p">.</span><span class="n">Methods</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">eventDefinition</span><span class="p">.</span><span class="n">AddMethod</span><span class="p">);</span>
+  <span class="n">type</span><span class="p">.</span><span class="n">Methods</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">eventDefinition</span><span class="p">.</span><span class="n">RemoveMethod</span><span class="p">);</span>
+  <span class="n">type</span><span class="p">.</span><span class="n">Events</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">eventDefinition</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>介绍这段代码之前，我们来看以下通常情况下，一个类是如何实现INotifyPropertyChanged接口的。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">class</span> <span class="nc">ClassA</span> <span class="p">:</span> <span class="n">INotifyPropertyChanged</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="k">event</span> <span class="n">PropertyChangedEventHandler</span> <span class="n">PropertyChanged</span><span class="p">;</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>从这里可以看出，一个类实现INotifyPropertyChanged接口的必备条件很少，
+它只需要在类的内部创建一个类型为PropertyChangedEventHandler的事件即可。</p>
+
+<p>而InjectINotifyPropertyChangedInterface()函数就是为了实现这个目的。</p>
+
+<p>虽然通常情况下一个类实现INotifyPropertyChanged接口很容易，但当需要用
+代码注入的方式实现相同的目的却必须额外做更多的事情。</p>
+
+<p>这里大概描述一个InjectINotifyPropertyChangedInterface()是如何进行代码
+的注入的：</p>
+
+<ol>
+  <li>
+    <p>为类实现的接口集中添加INotifyPropertyChanged接口</p>
+  </li>
+  <li>
+    <p>在类中创建一个名为PropertyChanged，类型为PropertyChangedEventHandler的字段</p>
+  </li>
+  <li>
+    <p>在类中创建一个名为PropertyChanged，类型为PropertyChangedEventHandler的事件</p>
+  </li>
+  <li>
+    <p>为上一步新创建的事件定义add和remove方法</p>
+  </li>
+</ol>
+
+<p>实际上，在c#中，一个事件本质上是一个委托，在一个委托类的声明中加入event
+关键字，就使它成为了一个事件类。</p>
+
+<p>事件类的主要作用是它限制了委托类的使用场景，即只用声明了该委托的类才能
+调用它。另外它提供了类似属性所具有的getter和setter特性。</p>
+
+<p>接下来看一下，add和remove方法是如何被创建的。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">MethodDefinition</span> <span class="nf">CreateEventMethod</span><span class="p">(</span><span class="kt">string</span> <span class="n">methodName</span><span class="p">,</span> <span class="n">MethodReference</span> <span class="n">delegateMethodReference</span><span class="p">,</span> <span class="n">FieldReference</span> <span class="n">propertyChangedField</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">const</span> <span class="n">MethodAttributes</span> <span class="n">Attributes</span> <span class="p">=</span> <span class="p">...;</span>
+  <span class="kt">var</span> <span class="n">method</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">MethodDefinition</span><span class="p">(</span><span class="n">methodName</span><span class="p">,</span> <span class="n">Attributes</span><span class="p">,</span> <span class="n">ModuleDefinition</span><span class="p">.</span><span class="n">TypeSystem</span><span class="p">.</span><span class="n">Void</span><span class="p">);</span>
+  <span class="n">method</span><span class="p">.</span><span class="n">Parameters</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="k">new</span> <span class="nf">ParameterDefinition</span><span class="p">(</span><span class="s">"value"</span> <span class="n">ParameterAttributes</span><span class="p">.</span><span class="n">None</span><span class="p">,</span> <span class="n">PropChangedHandlerReference</span><span class="p">));</span>
+  <span class="kt">var</span> <span class="n">handlerVariable0</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">VariableDefinition</span><span class="p">(</span><span class="n">PropChangedHandlerReference</span><span class="p">);</span>
+  <span class="n">method</span><span class="p">.</span><span class="n">Body</span><span class="p">.</span><span class="n">Variables</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">handlerVariable0</span><span class="p">);</span>
+  <span class="kt">var</span> <span class="n">handlerVariable1</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">VariableDefinition</span><span class="p">(</span><span class="n">PropChangedHandlerReference</span><span class="p">);</span>
+  <span class="n">method</span><span class="p">.</span><span class="n">Body</span><span class="p">.</span><span class="n">Variables</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">handlerVariable1</span><span class="p">);</span>
+  <span class="kt">var</span> <span class="n">handlerVariable2</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">VariableDefinition</span><span class="p">(</span><span class="n">PropChangedHandlerReference</span><span class="p">);</span>
+  <span class="n">method</span><span class="p">.</span><span class="n">Body</span><span class="p">.</span><span class="n">Variables</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">handlerVariable2</span><span class="p">);</span>
+
+  <span class="kt">var</span> <span class="n">loopBegin</span> <span class="p">=</span> <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">LdLoc</span><span class="p">,</span> <span class="n">handlerVariable0</span><span class="p">);</span>
+  <span class="n">method</span><span class="p">.</span><span class="n">Body</span><span class="p">.</span><span class="n">Instructions</span><span class="p">.</span><span class="nf">Append</span><span class="p">(</span>
+    <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Ldarg_0</span><span class="p">),</span>
+    <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Ldfld</span><span class="p">,</span> <span class="n">propertyChangedField</span><span class="p">),</span>
+    <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Stloc</span><span class="p">,</span> <span class="n">handlerVariable0</span><span class="p">),</span>
+    <span class="n">loopBegin</span><span class="p">,</span>
+    <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Stloc</span><span class="p">,</span> <span class="n">handlerVariable1</span><span class="p">),</span>
+    <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Ldloc</span><span class="p">,</span> <span class="n">handlerVariable1</span><span class="p">),</span>
+    <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Ldarg_1</span><span class="p">),</span>
+    <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Call</span><span class="p">,</span> <span class="n">delegateMethodReference</span><span class="p">),</span>
+    <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Castclass</span><span class="p">,</span> <span class="n">PropChangedHandlerReference</span><span class="p">),</span>
+    <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Stloc</span><span class="p">,</span> <span class="n">handlerVariable2</span><span class="p">),</span>
+    <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Ldarg_0</span><span class="p">),</span>
+    <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Ldflda</span><span class="p">,</span> <span class="n">propertyChangedField</span><span class="p">),</span>
+    <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Ldloc</span><span class="p">,</span> <span class="n">handlerVariable2</span><span class="p">),</span>
+    <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Ldloc</span><span class="p">,</span> <span class="n">handlerVariable1</span><span class="p">),</span>
+    <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Call</span><span class="p">,</span> <span class="n">InterlockedCompareExchangeForPropChangedHandler</span><span class="p">),</span>
+    <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Stloc</span><span class="p">,</span> <span class="n">handlerVariable0</span><span class="p">),</span>
+    <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Ldloc</span><span class="p">,</span> <span class="n">handlerVariable0</span><span class="p">),</span>
+    <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Ldloc</span><span class="p">,</span> <span class="n">handlerVariable1</span><span class="p">),</span>
+    <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Bne_Un_S</span><span class="p">,</span> <span class="n">loopBegin</span><span class="p">),</span> <span class="c1">// go to begin of loop</span>
+    <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Ret</span><span class="p">));</span>
+  <span class="n">method</span><span class="p">.</span><span class="n">Body</span><span class="p">.</span><span class="n">InitLocals</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+  <span class="p">...</span>
+  <span class="k">return</span> <span class="n">method</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>PropertyChanged事件的add和remove方法都是通过CreateEventMethod()函数
+创建出来的，区别是调用该函数时传入的参数不同。</p>
+
+<p>看懂这部分代码需要对通用语言基础结构（Common Language Infrastructure, CLI）
+有一定的了解。通过分析推算，该函数生成的代码类似如：</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">void</span> <span class="p">&lt;</span><span class="n">methodName</span><span class="p">&gt;(</span><span class="n">PropertyChangedHandler</span> <span class="k">value</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">PropertyChangedHandler</span> <span class="n">v0</span><span class="p">,</span> <span class="n">v1</span><span class="p">,</span> <span class="n">v2</span><span class="p">;</span>
+  <span class="n">v0</span> <span class="p">=</span> <span class="n">PropertyChangedHandler</span><span class="p">;</span>
+  <span class="k">do</span>
+  <span class="p">{</span>
+    <span class="n">v1</span> <span class="p">=</span> <span class="n">v0</span><span class="p">;</span>
+    <span class="n">v2</span> <span class="p">=</span> <span class="p">(</span><span class="n">PropertyChangedHandler</span><span class="p">)</span><span class="nf">delegateMethodReference</span><span class="p">(</span><span class="n">v1</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span>
+    <span class="n">v0</span> <span class="p">=</span> <span class="nf">InterlockedCompareExchangeForPropChangedHandler</span><span class="p">(</span><span class="k">ref</span> <span class="n">PropertyChangedHandler</span><span class="p">,</span> <span class="n">v2</span><span class="p">,</span> <span class="n">v1</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">while</span> <span class="p">(</span><span class="n">v0</span> <span class="p">!=</span> <span class="n">v1</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>这里有两点需要注意。第一点，这里使用了while循环。通常情况下，事件的
+注册（add）和注销（remove）很可能会同时被多个线程调用。</p>
+
+<p>假设事件的注册方法同时被两个线程调用，此时，v1已经注册了一个回调函数，
+当线程1注册了一个新的回到函数后，v2此时有两个回调函数，即已有的回调
+函数加上新的回调函数a。此时切换到了线程2，它也注册了一个回调函数，v2
+此时有两个回调函数，即已有的回调函数加上新的回调函数b。</p>
+
+<p>此时，无论是线程1或线程2先完成注册，后完成注册的线程会覆盖掉它之前完成
+注册的线程的添加的新的回调函数。</p>
+
+<p>因此，事件在注册新的回调函数前需要记录当前注册记录，当注册完后，必须
+对之前的记录和当前的记录进行对比，若它们没有引用同一个记录，说明该注册记录
+已被另外的线程修改过，所以需要重新进行注册。</p>
+
+<p>第二点是，这里使用了Interlocked.CompareExchange()函数。我们可以使用下面
+的代码来对比PropertyChangedHandler字段和v1。</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>if (PropertyChangedHandler == v1)
+  ProeprtyChangedHandler = v2
+</code></pre></div></div>
+
+<p>但是如果这段代码同时被多个线程调用，会出现同样的问题。Interlocked.CompareExchange()
+函数会做相同的事件，但它同时保证了对比和赋值这两个操作具有原子性。</p>
+
+<p>结合上面说的这几点总结一下，当一个类被添加了AddINotifyPropetyChangedInterfaceAttribute
+属性，它会被编译成:</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 代码注入前</span>
+<span class="na">[AddINotifyPropetyChangedInterfaceAttribute]</span>
+<span class="k">class</span> <span class="nc">ClassA</span>
+<span class="p">{</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+
+<span class="c1">// 代码注入后</span>
+<span class="k">class</span> <span class="nc">ClassA</span><span class="p">:</span> <span class="n">INotifyPropertyChanged</span>
+<span class="p">{</span>
+  <span class="k">private</span> <span class="n">PropertyChangedEventHandler</span> <span class="n">PropertyChanged</span><span class="p">;</span>
+  <span class="k">public</span> <span class="k">event</span> <span class="n">PropertyChangedEventHandler</span> <span class="n">PropertyChanged</span><span class="p">;</span>
+  <span class="k">public</span> <span class="k">void</span> <span class="nf">add_PropertyChanged</span><span class="p">(</span><span class="n">PropertyChangedEventHandler</span> <span class="k">value</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">PropertyChangedHandler</span> <span class="n">v0</span><span class="p">,</span> <span class="n">v1</span><span class="p">,</span> <span class="n">v2</span><span class="p">;</span>
+    <span class="n">v0</span> <span class="p">=</span> <span class="n">PropertyChangedHandler</span><span class="p">;</span>
+    <span class="k">do</span>
+    <span class="p">{</span>
+      <span class="n">v1</span> <span class="p">=</span> <span class="n">v0</span><span class="p">;</span>
+      <span class="n">v2</span> <span class="p">=</span> <span class="n">Delegate</span><span class="p">.</span><span class="nf">Combine</span><span class="p">(</span><span class="n">v1</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span>
+      <span class="n">v0</span> <span class="p">=</span> <span class="n">Interlocked</span><span class="p">.</span><span class="nf">CompareExchange</span><span class="p">(</span><span class="k">ref</span> <span class="n">PropertyChangedHandler</span><span class="p">,</span> <span class="n">v2</span><span class="p">,</span> <span class="n">v1</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">v0</span> <span class="p">!=</span> <span class="n">v1</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">public</span> <span class="k">void</span> <span class="nf">remove_PropertyChanged</span><span class="p">(</span><span class="n">PropertyChangedEventHandler</span> <span class="k">value</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">PropertyChangedHandler</span> <span class="n">v0</span><span class="p">,</span> <span class="n">v1</span><span class="p">,</span> <span class="n">v2</span><span class="p">;</span>
+    <span class="n">v0</span> <span class="p">=</span> <span class="n">PropertyChangedHandler</span><span class="p">;</span>
+    <span class="k">do</span>
+    <span class="p">{</span>
+      <span class="n">v1</span> <span class="p">=</span> <span class="n">v0</span><span class="p">;</span>
+      <span class="n">v2</span> <span class="p">=</span> <span class="n">Delegate</span><span class="p">.</span><span class="nf">Remove</span><span class="p">(</span><span class="n">v1</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span>
+      <span class="n">v0</span> <span class="p">=</span> <span class="n">Interlocked</span><span class="p">.</span><span class="nf">CompareExchange</span><span class="p">(</span><span class="k">ref</span> <span class="n">PropertyChangedHandler</span><span class="p">,</span> <span class="n">v2</span><span class="p">,</span> <span class="n">v1</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">v0</span> <span class="p">!=</span> <span class="n">v1</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>最后需要注意的是，如果你尝试编译上面的代码，会失败。主要因为你做了编译器
+会自动为你做的事情。</p>
+
+<p>我们回到最初的例子：</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">class</span> <span class="nc">ClassA</span> <span class="p">:</span> <span class="n">INotifyPropertyChanged</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="k">event</span> <span class="n">PropertyChangedEventHandler</span> <span class="n">PropertyChanged</span><span class="p">;</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>当编译器编译这段代码时，实际上，它会自动为我们生成类似的代码。
+fody.PropertyChanged为了用户的方便，替编译器做了它本会替用户自动做的事情。</p>
+
+  </div>
+
+  
+
+  <a class="u-url" href="/fody.propertychanged/2018/02/11/fody.PropertyChanged.part3.html" hidden></a>
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">读源码</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">
+            
+              读源码
+            
+            </li>
+            
+            <li><a class="u-email" href="mailto:ryanfzyw@gmail.com">ryanfzyw@gmail.com</a></li>
+            
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-2">
+        <ul class="social-media-list">
+  
+  
+  
+  <li><a href="https://github.com/ryanfzy"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg> <span class="username">ryanfzy</span></a></li>
+  
+  
+  
+  
+  
+  
+  
+</ul>
+
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>这里是一个关于阅读源码的网站，这里有我在阅读源码过程中做的笔记，希望这些笔记能对读到它们的人有帮助。 </p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

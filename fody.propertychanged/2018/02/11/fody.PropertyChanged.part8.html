@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Begin Jekyll SEO tag v2.4.0 -->
+<title>读fody.PropertyChanged源码（8）：注入NotifyPropertyChanged()函数 | 读源码</title>
+<meta name="generator" content="Jekyll v3.7.2" />
+<meta property="og:title" content="读fody.PropertyChanged源码（8）：注入NotifyPropertyChanged()函数" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="fody.PropertyChanged的核心功能是当类中的属性的值改变时，它正确的通知那些 改变了的属性。到了这一步，它已经获得进行代码注入的必要信息。" />
+<meta property="og:description" content="fody.PropertyChanged的核心功能是当类中的属性的值改变时，它正确的通知那些 改变了的属性。到了这一步，它已经获得进行代码注入的必要信息。" />
+<link rel="canonical" href="http://localhost:4000/fody.propertychanged/2018/02/11/fody.PropertyChanged.part8.html" />
+<meta property="og:url" content="http://localhost:4000/fody.propertychanged/2018/02/11/fody.PropertyChanged.part8.html" />
+<meta property="og:site_name" content="读源码" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2018-02-11T00:00:00+13:00" />
+<script type="application/ld+json">
+{"description":"fody.PropertyChanged的核心功能是当类中的属性的值改变时，它正确的通知那些 改变了的属性。到了这一步，它已经获得进行代码注入的必要信息。","@type":"BlogPosting","url":"http://localhost:4000/fody.propertychanged/2018/02/11/fody.PropertyChanged.part8.html","headline":"读fody.PropertyChanged源码（8）：注入NotifyPropertyChanged()函数","dateModified":"2018-02-11T00:00:00+13:00","datePublished":"2018-02-11T00:00:00+13:00","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/fody.propertychanged/2018/02/11/fody.PropertyChanged.part8.html"},"@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+  <link rel="stylesheet" href="/assets/main.css">
+  <link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="读源码" />
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" rel="author" href="/">读源码</a>
+
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+            <a class="page-link" href="/about/">About</a>
+            
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">读fody.PropertyChanged源码（8）：注入NotifyPropertyChanged()函数</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2018-02-11T00:00:00+13:00" itemprop="datePublished">
+        
+        Feb 11, 2018
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>fody.PropertyChanged的核心功能是当类中的属性的值改变时，它正确的通知那些
+改变了的属性。到了这一步，它已经获得进行代码注入的必要信息。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// PropertyChanged\PropertyChanged.Fody\TypeProcessor.cs</span>
+<span class="k">public</span> <span class="k">void</span> <span class="nf">ProcessTypes</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="nf">ProcessTypes</span><span class="p">(</span><span class="n">NotifyNodes</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="k">void</span> <span class="nf">ProcessTypes</span><span class="p">(</span><span class="n">List</span><span class="p">&lt;</span><span class="n">TypeNode</span><span class="p">&gt;</span> <span class="n">notifyNodes</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">node</span> <span class="k">in</span> <span class="n">notifyNodes</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">node</span><span class="p">.</span><span class="n">EventInvoker</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="k">continue</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="p">...</span>
+    <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">propertyData</span> <span class="k">in</span> <span class="n">node</span><span class="p">.</span><span class="n">PropertyDatas</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="kt">var</span> <span class="n">body</span> <span class="p">=</span> <span class="n">propertyData</span><span class="p">.</span><span class="n">PropertyDefinition</span><span class="p">.</span><span class="n">SetMethod</span><span class="p">.</span><span class="n">Body</span><span class="p">;</span>
+      <span class="kt">var</span> <span class="n">alreadyHasEquality</span> <span class="p">=</span> <span class="n">HasEqualityChecker</span><span class="p">.</span><span class="nf">AlreadyHasEquality</span><span class="p">(</span><span class="n">propertyData</span><span class="p">.</span><span class="n">PropertyDefinition</span><span class="p">,</span> <span class="n">propertyData</span><span class="p">.</span><span class="n">BackingFieldReference</span><span class="p">);</span>
+      <span class="n">body</span><span class="p">.</span><span class="nf">SimplifyMacros</span><span class="p">();</span>
+      <span class="n">body</span><span class="p">.</span><span class="nf">MakeLastStatementReturn</span><span class="p">();</span>
+      <span class="kt">var</span> <span class="n">propertyWeaver</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">ProeprtyWeaver</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="n">propertyData</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">ModuleDefinition</span><span class="p">.</span><span class="n">TypeSystem</span><span class="p">);</span>
+      <span class="n">propertyWeaver</span><span class="p">.</span><span class="nf">Execute</span><span class="p">();</span>
+      <span class="k">if</span> <span class="p">(!</span><span class="n">alreadyHasEquality</span><span class="p">)</span>
+      <span class="p">{</span>
+        <span class="kt">var</span> <span class="n">equalityCheckWeaver</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">EqualityCheckWeaver</span><span class="p">(</span><span class="n">propertyData</span><span class="p">,</span> <span class="n">node</span><span class="p">.</span><span class="n">TypeDefinition</span><span class="p">,</span> <span class="k">this</span><span class="p">);</span>
+        <span class="n">equalityCheckWeaver</span><span class="p">.</span><span class="nf">Execute</span><span class="p">();</span>
+      <span class="p">}</span>
+      <span class="n">body</span><span class="p">.</span><span class="n">InitLocals</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+      <span class="n">body</span><span class="p">.</span><span class="nf">OptimizeMacros</span><span class="p">();</span>
+    <span class="p">}</span>
+    <span class="nf">ProcessTypes</span><span class="p">(</span><span class="n">node</span><span class="p">.</span><span class="n">Nodes</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>这里遍历每个节点对应的类的每个属性，向该属性的setter中注入适当的调用
+NotifyProeprtyChanged()方法的代码。另外，它还注入一些其他的代码，来保证
+注入的代码不影响原本的代码的行为。</p>
+
+<p>HasEqualityChecker.AlreadyHasEquality()方法检测当前属性的setter函数体的
+开头，是否包含代码新旧值的是否相等，具体之后讲解。</p>
+
+<p>MakeLastStatementReturn()方法会修改当前属性的setter函数体，它先在函数体
+的末尾添加一个return语句，然后遍历setter命令集的每条命令，每当发现一个
+return命令时，将它修改成跳转语句，跳转的目标就是新添加的return语句。
+这么做的目的是在setter被调用时防止被注入的NotifyPropertyChanged()语句被
+忽略，确保这些语句肯定被执行。</p>
+
+<p>接下来，代码创建一个PropertyWeaver对象，该对象负责注入调用
+NotifyPropertyChanged()方法的代码。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// PropertyChanged\PropertyChanged.Fody\PropertyWeaver.cs</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">PropertyWeaver</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="k">void</span> <span class="nf">Execute</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="kt">var</span> <span class="n">property</span> <span class="p">=</span> <span class="n">propertyData</span><span class="p">.</span><span class="n">PropertyDefinition</span><span class="p">;</span>
+    <span class="n">setMethodBody</span> <span class="p">=</span> <span class="n">property</span><span class="p">.</span><span class="n">SetMethod</span><span class="p">.</span><span class="n">Body</span><span class="p">;</span>
+    <span class="n">instructions</span> <span class="p">=</span> <span class="n">property</span><span class="p">.</span><span class="n">SetMethod</span><span class="p">.</span><span class="n">Body</span><span class="p">.</span><span class="n">Instructions</span><span class="p">;</span>
+    <span class="kt">var</span> <span class="n">indexes</span> <span class="p">=</span> <span class="nf">GetIndexes</span><span class="p">();</span>
+    <span class="n">indexes</span><span class="p">.</span><span class="nf">Reverse</span><span class="p">();</span>
+    <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">index</span> <span class="k">in</span> <span class="n">indexes</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="nf">InjectAtIndex</span><span class="p">(</span><span class="n">index</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="n">List</span><span class="p">&lt;</span><span class="n">Int</span><span class="p">&gt;</span> <span class="nf">GetIndexes</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">propertyData</span><span class="p">.</span><span class="n">BackingFieldReference</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="k">return</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="p">{</span> <span class="n">instructions</span><span class="p">.</span><span class="n">Count</span> <span class="p">-</span> <span class="m">1</span><span class="p">;</span> <span class="p">};</span>
+    <span class="p">}</span>
+    <span class="kt">var</span> <span class="n">setFieldInstructions</span> <span class="p">=</span> <span class="nf">FindSetFieldInstructions</span><span class="p">().</span><span class="nf">ToList</span><span class="p">();</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">setFieldInstructions</span><span class="p">.</span><span class="n">Count</span> <span class="p">==</span> <span class="m">0</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="k">return</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="p">{</span> <span class="n">instructions</span><span class="p">.</span><span class="n">Count</span> <span class="p">-</span> <span class="m">1</span> <span class="p">};</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">setFieldInstructions</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>PropertyWeaver对象的Execute()方法先分析得到注入代码的位置，然后在适合的
+位置注入相应的代码。在分析注入位置时，如果当前属性没有对应的字段或
+当前属性的setter中没有找到任何修改对应的字段的命令，就返回setter中最后的
+命令（return命令）之前的位置，即在setter运行结束前调用NotifyPropertyChanged()
+方法。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// PropertyChanged\PropertyChanged.Fody\PropertyWeaver.cs</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">PropertyWeaver</span>
+<span class="p">{</span>
+  <span class="p">...</span>
+  <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="nf">FindSetFieldInstructions</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">var</span> <span class="n">index</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">index</span> <span class="p">&lt;</span> <span class="n">instructions</span><span class="p">.</span><span class="n">Count</span><span class="p">;</span> <span class="n">index</span><span class="p">++)</span>
+    <span class="p">{</span>
+      <span class="kt">var</span> <span class="n">instruction</span> <span class="p">=</span> <span class="n">instructions</span><span class="p">[</span><span class="n">index</span><span class="p">];</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">instruction</span><span class="p">.</span><span class="n">OpCode</span> <span class="p">==</span> <span class="n">OpCodes</span><span class="p">.</span><span class="n">Stfld</span><span class="p">)</span>
+      <span class="p">{</span>
+        <span class="kt">var</span> <span class="n">fieldReference</span> <span class="p">=</span> <span class="n">instruction</span><span class="p">.</span><span class="n">Operand</span> <span class="k">as</span> <span class="n">FieldReference</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">fieldReference</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+        <span class="p">{</span>
+          <span class="k">continue</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">fieldReference</span><span class="p">.</span><span class="n">Name</span> <span class="p">==</span> <span class="n">propertyData</span><span class="p">.</span><span class="n">BackingFieldReference</span><span class="p">.</span><span class="n">Name</span><span class="p">)</span>
+        <span class="p">{</span>
+          <span class="k">yield</span> <span class="k">return</span> <span class="n">index</span> <span class="p">+</span> <span class="m">1</span><span class="p">;</span>
+        <span class="p">}</span>
+      <span class="p">}</span>
+      <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">instruction</span><span class="p">.</span><span class="n">OpCode</span> <span class="p">==</span> <span class="n">OpCodes</span><span class="p">.</span><span class="n">Ldflda</span><span class="p">)</span>
+      <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">instruction</span><span class="p">.</span><span class="n">Next</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+        <span class="p">{</span>
+          <span class="k">continue</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">instruction</span><span class="p">.</span><span class="n">Next</span><span class="p">.</span><span class="n">OpCode</span> <span class="p">!=</span> <span class="n">OpCodes</span><span class="p">.</span><span class="n">Initobj</span><span class="p">)</span>
+        <span class="p">{</span>
+          <span class="k">continue</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="kt">var</span> <span class="n">fieldReference</span> <span class="p">=</span> <span class="n">instruction</span><span class="p">.</span><span class="n">Operand</span> <span class="k">as</span> <span class="n">FieldReference</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">fieldReference</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+        <span class="p">{</span>
+          <span class="k">continue</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">fieldReference</span><span class="p">.</span><span class="n">Name</span> <span class="p">==</span> <span class="n">propertyData</span><span class="p">.</span><span class="n">BackingFieldReference</span><span class="p">.</span><span class="n">Name</span><span class="p">)</span>
+        <span class="p">{</span>
+          <span class="k">yield</span> <span class="k">return</span> <span class="n">index</span> <span class="p">+</span> <span class="m">2</span><span class="p">;</span>
+        <span class="p">}</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面的代码会返回在当前属性的setter中，那些修改该属性对应的字段的命令的
+位置（第一个if语句），和那些初始化该字段的命令的位置（else if语句）。它
+的逻辑是，当该属性对应的字段被修改时或首次或再次被初始化时，应该通知
+该属性的值改变了。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// PropertyChanged\PropertyChanged.Fody\PropertyWeaver.cs</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">PropertyWeaver</span>
+<span class="p">{</span>
+  <span class="p">...</span>
+  <span class="k">void</span> <span class="nf">InjectAtIndex</span><span class="p">(</span><span class="kt">int</span> <span class="n">index</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">index</span> <span class="p">=</span> <span class="nf">AddIsChangedSetterCall</span><span class="p">(</span><span class="n">index</span><span class="p">);</span>
+    <span class="kt">var</span> <span class="n">propertyDefinition</span> <span class="p">=</span> <span class="n">propertyData</span><span class="p">.</span><span class="n">AlsoNotifyFor</span><span class="p">.</span><span class="nf">Distinct</span><span class="p">();</span>
+    <span class="n">index</span> <span class="p">=</span> <span class="n">propertyDefinition</span><span class="p">.</span><span class="nf">Aggregate</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="nf">AddEventInvokeCall</span><span class="p">());</span>
+    <span class="nf">AddEventInvokeCall</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">propertyData</span><span class="p">.</span><span class="n">PropertyDefinition</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+  <span class="kt">int</span> <span class="nf">AddEventInvokeCall</span><span class="p">(</span><span class="kt">int</span> <span class="n">index</span><span class="p">,</span> <span class="n">PropertyDefinition</span> <span class="n">property</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">index</span> <span class="p">=</span> <span class="nf">AddOnChangedMethodCall</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">property</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">propertyData</span><span class="p">.</span><span class="n">AlreadyNotifies</span><span class="p">.</span><span class="nf">Contains</span><span class="p">(</span><span class="n">property</span><span class="p">.</span><span class="n">Name</span><span class="p">))</span>
+    <span class="p">{</span>
+      <span class="p">...</span>
+      <span class="k">return</span> <span class="n">index</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="p">...</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">typeNode</span><span class="p">.</span><span class="n">EventInvoker</span><span class="p">.</span><span class="n">InvokerType</span> <span class="p">==</span> <span class="n">InvokerTypes</span><span class="p">.</span><span class="n">BeforeAfterGeneric</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="k">return</span> <span class="nf">AddBeforeAfterGenericInvokerCall</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">property</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">typeNode</span><span class="p">.</span><span class="n">EventInvoker</span><span class="p">.</span><span class="n">InvokerType</span> <span class="p">==</span> <span class="n">InvokerTypes</span><span class="p">.</span><span class="n">BeforeAfter</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="k">return</span> <span class="nf">AddBeforeAfterInvokerCall</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">property</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">typeNode</span><span class="p">.</span><span class="n">EventInvoker</span><span class="p">.</span><span class="n">InvokerType</span> <span class="p">==</span> <span class="n">InvokerTypes</span><span class="p">.</span><span class="n">PropertyChangedArg</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="k">return</span> <span class="nf">AddPropertyChangedArgInvokerCall</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">property</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">typeNode</span><span class="p">.</span><span class="n">EventInvoker</span><span class="p">.</span><span class="n">InvokerType</span> <span class="p">==</span> <span class="n">InvokerTypes</span><span class="p">.</span><span class="n">SenderPropertyChangedArg</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="k">return</span> <span class="nf">AddSenderPropertyChangedArgInvokerCall</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">property</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nf">AddSimpleInvokerCall</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">property</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>得到要注入代码的位置后，在每个注入代码的位置上调用InjectAtIndex()方法，
+该方法迭代依赖于当前属性的属性，通知这些属性的每个属性都改变了。</p>
+
+<p>从该方法中可以看出，要注入的代码包括修改IsChanged属性为true，然后依次为
+依赖于当前属性的每个属性调用适合的OnPropertyChanged()方法，还有在注入
+调用NotifyPropertyChanged()方法的同时，根据该方法的类型的不同，传入不同的
+参数。</p>
+
+<p>这里省略AddIsChangedSetterCall()和AddOnChangedMethodCall()方法，
+具体请见PropertyChanged\PropertyChanged.Fody\PropertyWeaver.cs文件。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// PropertyChanged\PropertyChanged.Fody\PropertyWeaver.cs</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">PropertyWeaver</span>
+<span class="p">{</span>
+  <span class="p">...</span>
+  <span class="kt">int</span> <span class="nf">AddBeforeAfterGenericInvokerCall</span><span class="p">(</span><span class="kt">int</span> <span class="n">index</span><span class="p">,</span> <span class="n">PropertyDefinition</span> <span class="n">property</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="kt">var</span> <span class="n">beforeVariable</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">VariableDefinition</span><span class="p">(</span><span class="n">property</span><span class="p">.</span><span class="n">PropertyType</span><span class="p">);</span>
+    <span class="n">setMethodBody</span><span class="p">.</span><span class="n">Variables</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">beforeVariable</span><span class="p">);</span>
+    <span class="kt">var</span> <span class="n">afterVariable</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">VariableDefinition</span><span class="p">(</span><span class="n">property</span><span class="p">.</span><span class="n">PropertyType</span><span class="p">);</span>
+    <span class="n">setMethodBody</span><span class="p">.</span><span class="n">Variables</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">afterVariable</span><span class="p">);</span>
+    <span class="n">index</span> <span class="p">=</span> <span class="nf">InsertVariableAssignmentFromCurrentValue</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">property</span><span class="p">,</span> <span class="n">afterVariable</span><span class="p">);</span>
+    <span class="n">index</span> <span class="p">=</span> <span class="n">instructions</span><span class="p">.</span><span class="nf">Insert</span><span class="p">(</span><span class="n">index</span><span class="p">,</span>
+      <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Ldarg_0</span><span class="p">),</span>
+      <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Ldstr</span><span class="p">,</span> <span class="n">property</span><span class="p">.</span><span class="n">Name</span><span class="p">),</span>
+      <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Ldloc</span><span class="p">,</span> <span class="n">beforeVariable</span><span class="p">),</span>
+      <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Ldloc</span><span class="p">,</span> <span class="n">afterVariable</span><span class="p">),</span>
+      <span class="nf">CallEventInvoker</span><span class="p">(</span><span class="n">property</span><span class="p">)</span>
+      <span class="p">);</span>
+    <span class="k">return</span> <span class="nf">AddBeforeVariableAssignment</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">property</span><span class="p">,</span> <span class="n">beforeVariable</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+  <span class="kt">int</span> <span class="nf">InsertVariableAssignmentFromCurrentValue</span><span class="p">(</span><span class="kt">int</span> <span class="n">index</span><span class="p">,</span> <span class="n">PropertyDefinition</span> <span class="n">property</span><span class="p">,</span> <span class="n">VariableDefinition</span> <span class="n">variable</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="kt">var</span> <span class="n">getMethod</span> <span class="p">=</span> <span class="n">property</span><span class="p">.</span><span class="n">GetMethod</span><span class="p">.</span><span class="nf">GetGeneric</span><span class="p">();</span>
+    <span class="n">instructions</span><span class="p">.</span><span class="nf">Insert</span><span class="p">(</span><span class="n">index</span><span class="p">,</span>
+      <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Ldarg_0</span><span class="p">),</span>
+      <span class="nf">CreateCall</span><span class="p">(</span><span class="n">getMethod</span><span class="p">),</span>
+      <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Box</span><span class="p">,</span> <span class="n">property</span><span class="p">.</span><span class="n">GetMethod</span><span class="p">.</span><span class="n">ReturnType</span><span class="p">),</span>
+      <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Stloc</span><span class="p">,</span> <span class="n">variable</span><span class="p">));</span>
+    <span class="k">return</span> <span class="n">index</span> <span class="p">+</span> <span class="m">4</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="kt">int</span> <span class="n">Instruction</span> <span class="nf">CallEventInvoker</span><span class="p">(</span><span class="n">PropertyDefinition</span> <span class="n">propertyDefinition</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="kt">var</span> <span class="n">method</span> <span class="p">=</span> <span class="n">typeNode</span><span class="p">.</span><span class="n">EventInvoker</span><span class="p">.</span><span class="n">MethodReference</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">method</span><span class="p">.</span><span class="n">HasGenericParameters</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="kt">var</span> <span class="n">genericMethod</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">GenericInstanceMethod</span><span class="p">(</span><span class="n">method</span><span class="p">);</span>
+      <span class="n">genericMethod</span><span class="p">.</span><span class="n">GenericArguments</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">propertyDefinition</span><span class="p">.</span><span class="n">PropertyType</span><span class="p">);</span>
+      <span class="n">method</span> <span class="p">=</span> <span class="n">genericMethod</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Callvirt</span><span class="p">,</span> <span class="n">method</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="kt">int</span> <span class="nf">AddBeforeVariableAssignment</span><span class="p">(</span><span class="kt">int</span> <span class="n">index</span><span class="p">,</span> <span class="n">PropertyDefinition</span><span class="p">,</span> <span class="n">VariableDefinition</span> <span class="n">beforeVariable</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="kt">var</span> <span class="n">getMethod</span> <span class="p">=</span> <span class="n">property</span><span class="p">.</span><span class="n">GetMethod</span><span class="p">.</span><span class="nf">GetGeneric</span><span class="p">();</span>
+    <span class="n">instructions</span><span class="p">.</span><span class="nf">Prepend</span><span class="p">(</span>
+      <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Ldarg_0</span><span class="p">),</span>
+      <span class="nf">CreateCall</span><span class="p">(</span><span class="n">getMethod</span><span class="p">),</span>
+      <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Box</span><span class="p">,</span> <span class="n">property</span><span class="p">.</span><span class="n">GetMethod</span><span class="p">.</span><span class="n">ReturnType</span><span class="p">),</span>
+      <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Stloc</span><span class="p">,</span> <span class="n">beforeVariable</span><span class="p">));</span>
+    <span class="k">return</span> <span class="n">index</span> <span class="p">+</span> <span class="m">4</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">public</span> <span class="n">Instruction</span> <span class="nf">CreateCall</span><span class="p">(</span><span class="n">MethodReference</span><span class="p">,</span> <span class="n">methodReference</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Callvirt</span><span class="p">,</span> <span class="n">methodReference</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>如果当前节点对象的EventInvoker的InvokerType是InvokerTypes.BeforeAfterGeneric，
+那该节点对应的类的NotifyPropertyChanged()方法的签名是，</p>
+
+<ul>
+  <li>NotifyPropertyChanged<T>(string propertyName, T beforeValue, T afterValue)</T></li>
+</ul>
+
+<p>在调用该方法的同时，需要传入属性的旧值和新值。</p>
+
+<p>上面的代码先在setter函数体添加两个新的变量，分别用来保存属性的新值和旧值。
+然后，注入获得新值的命令，再注入调用NotifyPropertyChanged()方法的命令，
+最后在函数体的开头注入获得旧值的命令。</p>
+
+<p>AddBeforeAfterInvokerCall()方法与AddBeforeAfterGenericInvokerCall()方法
+大同小异，这里忽略。具体请见PropertyChanged\PropertyChanged.Fody\PropertyWeaver.cs
+文件。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// PropertyChanged\PropertyChanged.Fody\PropertyWeaver.cs</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">PropertyWeaver</span>
+<span class="p">{</span>
+  <span class="p">...</span>
+  <span class="kt">int</span> <span class="nf">AddPropertyChangedArgInvokerCall</span><span class="p">(</span><span class="kt">int</span> <span class="n">index</span><span class="p">,</span> <span class="n">PropertyDefinition</span> <span class="n">property</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="n">instructions</span><span class="p">.</span><span class="nf">Insert</span><span class="p">(</span><span class="n">index</span><span class="p">,</span>
+      <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Ldarg_0</span><span class="p">),</span>
+      <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Ldstr</span><span class="p">,</span> <span class="n">property</span><span class="p">.</span><span class="n">Name</span><span class="p">),</span>
+      <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Newobj</span><span class="p">,</span> <span class="n">moduleWeaver</span><span class="p">.</span><span class="n">ComponentModelPropertyChangedEventConstructorReference</span><span class="p">),</span>
+      <span class="nf">CallEventInvoker</span><span class="p">(</span><span class="n">property</span><span class="p">));</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>如果当前节点对象的EventInvoker的InvokerType是InvokerTypes.PropertyChangedArg，
+那该节点对应的类的NotifyPropertyChanged()方法的签名是，</p>
+
+<ul>
+  <li>NotifyPropertyChanged(PropertyChangedEventArgs arg)</li>
+</ul>
+
+<p>这需要在调用该方法前，创建一个PropertyChangedEventArg对象，然后将它
+传入该方法。</p>
+
+<p>AddSenderPropertyChangedArgInvokerCall()方法与AddPropertyChangedArgInvokerCall()
+方法大同小异，不同的地方是它需要将当前调用NotifyPropertyChanged()方法的
+对象（即this）传入到该方法内。</p>
+
+<p>在遍历为依赖于当前属性的属性后，InjectAtIndex()方法最后调用AddEventInvokeCall()
+方法处理当前属性，即被依赖的属性。</p>
+
+<p>我们回到ProcessTypes()方法中，之前说过HasEqualityChecker.AlreadyHasEquality()
+方法会检查当前属性的setter的函数体的开头是否有代码检测该属性的新值和旧值。</p>
+
+<p>如果不存在这些代码，ProcessTypes()方法会创建一个EqualityCheckWeaver对象，
+然后使用该对象注入类似的代码。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// PropertyChanged\PropertyChanged.Fody\EqualityCheckWeaver.cs</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">EqualityCheckWeaver</span>
+<span class="p">{</span>
+  <span class="p">...</span>
+  <span class="k">public</span> <span class="k">void</span> <span class="nf">Execute</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="kt">var</span> <span class="n">property</span> <span class="p">=</span> <span class="n">propertyData</span><span class="p">.</span><span class="n">PropertyDefinition</span><span class="p">;</span>
+    <span class="n">instructions</span> <span class="p">=</span> <span class="n">property</span><span class="p">.</span><span class="n">SetMethod</span><span class="p">.</span><span class="n">Body</span><span class="p">.</span><span class="n">Instructions</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">propertyData</span><span class="p">.</span><span class="n">BackingFieldReference</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="nf">CheckAgainstProperty</span><span class="p">();</span>
+    <span class="p">}</span>
+    <span class="k">else</span>
+    <span class="p">{</span>
+      <span class="nf">CheckAgainstField</span><span class="p">();</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="k">void</span> <span class="nf">CheckAgainstField</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="kt">var</span> <span class="n">fieldReference</span> <span class="p">=</span> <span class="n">propertyData</span><span class="p">.</span><span class="n">BackingFieldReference</span><span class="p">.</span><span class="nf">Resolve</span><span class="p">().</span><span class="nf">GetGeneric</span><span class="p">();</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">propertyData</span><span class="p">.</span><span class="n">BackingFieldReference</span><span class="p">.</span><span class="n">FieldType</span><span class="p">.</span><span class="n">FullName</span> <span class="p">==</span> <span class="n">propertyData</span><span class="p">.</span><span class="n">PropertyDefinition</span><span class="p">.</span><span class="n">PropertyType</span><span class="p">.</span><span class="n">FullName</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="nf">InjectEqualityCheck</span><span class="p">(</span><span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Ldfld</span><span class="p">,</span> <span class="n">fieldReference</span><span class="p">),</span> <span class="n">fieldReference</span><span class="p">.</span><span class="n">FieldType</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="k">void</span> <span class="nf">CheckAgainstProperty</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="kt">var</span> <span class="n">propertyReference</span> <span class="p">=</span> <span class="n">propertyData</span><span class="p">.</span><span class="n">PropertyDefinition</span><span class="p">;</span>
+    <span class="kt">var</span> <span class="n">methodDefinition</span> <span class="p">=</span> <span class="n">propertyData</span><span class="p">.</span><span class="n">PropertyDefinition</span><span class="p">.</span><span class="n">GetMethod</span><span class="p">.</span><span class="nf">GetGeneric</span><span class="p">();</span>
+    <span class="nf">InjectEqualityCheck</span><span class="p">(</span><span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Call</span><span class="p">,</span> <span class="n">methodDefinition</span><span class="p">),</span> <span class="n">propertyReference</span><span class="p">.</span><span class="n">PropertyType</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>根据当前属性是否有对应的字段，分别调用CheckAgainstProperty()方法和
+CheckAgainstField()方法，但它们会调用相同的InjectEqualityCheck()方法注入
+必要的代码。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// PropertyChanged\PropertyChanged.Fody\EqualityCheckWeaver.cs</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">EqualityCheckWeaver</span>
+<span class="p">{</span>
+  <span class="p">...</span>
+  <span class="k">void</span> <span class="nf">InjectEqualityCheck</span><span class="p">(</span><span class="n">Instruction</span> <span class="n">targetInstruction</span><span class="p">,</span> <span class="n">TypeReference</span> <span class="n">targetType</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="p">...</span>
+    <span class="kt">var</span> <span class="n">nopInstruction</span> <span class="p">=</span> <span class="n">instructions</span><span class="p">.</span><span class="nf">First</span><span class="p">();</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">nopInstruction</span><span class="p">.</span><span class="n">OpCode</span> <span class="p">!=</span> <span class="n">OpCodes</span><span class="p">.</span><span class="n">Nop</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">nopInstruction</span> <span class="p">=</span> <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Nop</span><span class="p">);</span>
+      <span class="n">instructions</span><span class="p">.</span><span class="nf">Insert</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="n">nopInstruction</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">targetType</span><span class="p">.</span><span class="n">Name</span> <span class="p">==</span> <span class="s">"String"</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">instructions</span><span class="p">.</span><span class="nf">Prepend</span><span class="p">(</span>
+        <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Ldarg_0</span><span class="p">),</span>
+        <span class="n">targetInstruction</span><span class="p">,</span>
+        <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Ldarg_1</span><span class="p">),</span>
+        <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">Idc_I4</span><span class="p">,</span> <span class="n">typeEqualityFinder</span><span class="p">.</span><span class="n">OrdinalStringComparison</span><span class="p">),</span>
+        <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">Call</span><span class="p">,</span> <span class="n">typeEqualityFinder</span><span class="p">.</span><span class="n">StringEquals</span><span class="p">),</span>
+        <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">Barfalse_S</span><span class="p">,</span> <span class="n">nopInstruction</span><span class="p">),</span>
+        <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Ret</span><span class="p">));</span>
+      <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="kt">var</span> <span class="n">typeEqualityMethod</span> <span class="p">=</span> <span class="n">typeEqualityFinder</span><span class="p">.</span><span class="nf">FindTypeEquality</span><span class="p">(</span><span class="n">targetType</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">typeEqualityMethod</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="p">...</span>
+    <span class="p">}</span>
+    <span class="k">else</span>
+    <span class="p">{</span>
+      <span class="n">instructions</span><span class="p">.</span><span class="nf">Prepend</span><span class="p">(</span>
+        <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Ldarg_0</span><span class="p">),</span>
+        <span class="n">targetInstruction</span><span class="p">,</span>
+        <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Ldarg_1</span><span class="p">),</span>
+        <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCodes</span><span class="p">.</span><span class="n">Brfalse_s</span><span class="p">,</span> <span class="n">nopInstruction</span><span class="p">),</span>
+        <span class="n">Instruction</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">OpCdoes</span><span class="p">.</span><span class="n">Ret</span><span class="p">));</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>InjectEqualityCheck()方法会在传入的属性的setter中的开头注入少量的代码，
+这些代码比较传入的属性的新值和旧值是否相等，若相等就返回，否则从头运行
+setter中已存在的代码。</p>
+
+<p>这里需要注意的地方是typeEqualityFinder对象，它负责针对属性的值的类型
+找到合适的比较函数，来比较属性的值。这里忽略它的实现。</p>
+
+<p>我们再次回到ProcessTypes()方法，当该方法处理往当前的节点后，递归调用
+ProcessTypes()方法处理该节点的子节点。</p>
+
+<p>到这里为止，fody.PropertyChanged已经完成它被赋予的主要任务。</p>
+
+  </div>
+
+  
+
+  <a class="u-url" href="/fody.propertychanged/2018/02/11/fody.PropertyChanged.part8.html" hidden></a>
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">读源码</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">
+            
+              读源码
+            
+            </li>
+            
+            <li><a class="u-email" href="mailto:ryanfzyw@gmail.com">ryanfzyw@gmail.com</a></li>
+            
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-2">
+        <ul class="social-media-list">
+  
+  
+  
+  <li><a href="https://github.com/ryanfzy"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg> <span class="username">ryanfzy</span></a></li>
+  
+  
+  
+  
+  
+  
+  
+</ul>
+
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>这里是一个关于阅读源码的网站，这里有我在阅读源码过程中做的笔记，希望这些笔记能对读到它们的人有帮助。 </p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

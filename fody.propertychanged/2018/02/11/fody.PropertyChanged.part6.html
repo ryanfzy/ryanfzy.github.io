@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Begin Jekyll SEO tag v2.4.0 -->
+<title>读fody.PropertyChanged源码（6）：属性依赖链 | 读源码</title>
+<meta name="generator" content="Jekyll v3.7.2" />
+<meta property="og:title" content="读fody.PropertyChanged源码（6）：属性依赖链" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="假设有如下类，" />
+<meta property="og:description" content="假设有如下类，" />
+<link rel="canonical" href="http://localhost:4000/fody.propertychanged/2018/02/11/fody.PropertyChanged.part6.html" />
+<meta property="og:url" content="http://localhost:4000/fody.propertychanged/2018/02/11/fody.PropertyChanged.part6.html" />
+<meta property="og:site_name" content="读源码" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2018-02-11T00:00:00+13:00" />
+<script type="application/ld+json">
+{"description":"假设有如下类，","@type":"BlogPosting","url":"http://localhost:4000/fody.propertychanged/2018/02/11/fody.PropertyChanged.part6.html","headline":"读fody.PropertyChanged源码（6）：属性依赖链","dateModified":"2018-02-11T00:00:00+13:00","datePublished":"2018-02-11T00:00:00+13:00","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/fody.propertychanged/2018/02/11/fody.PropertyChanged.part6.html"},"@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+  <link rel="stylesheet" href="/assets/main.css">
+  <link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="读源码" />
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" rel="author" href="/">读源码</a>
+
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+            <a class="page-link" href="/about/">About</a>
+            
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">读fody.PropertyChanged源码（6）：属性依赖链</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2018-02-11T00:00:00+13:00" itemprop="datePublished">
+        
+        Feb 11, 2018
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>假设有如下类，</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">class</span> <span class="nc">Customer</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="kt">string</span> <span class="n">FirstName</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="k">public</span> <span class="kt">string</span> <span class="n">LastName</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="k">public</span> <span class="kt">string</span> <span class="n">FullName</span>
+  <span class="p">{</span>
+    <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="n">FirstName</span> <span class="p">+</span> <span class="s">" "</span> <span class="p">+</span> <span class="n">LastName</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>在Customer类中，当FirstName属性或LastName属性的值改变时，FullName属性
+的值也会改变，因为FullName属性依赖FirstName属性和LastName属性。</p>
+
+<p>因此，当FirstName属性发生变化时，我们不仅需要调用NotifyPropertyChanged()
+方法通知它的变化，也应该调用同样的方法通知FullName属性的变化。如果我们
+希望fody.PropertyChanged做这件事情，它必须先计算出一个类中的每个属性之间
+依赖关系，即为该类建立一个属性依赖链。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// PropertyChanged\PropertyChanged.Fody\IlGeneratedByDependencyProcessor.cs</span>
+<span class="k">public</span> <span class="k">void</span> <span class="nf">DetectIlGeneratedByDependency</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="nf">DetectIlGeneratedByDependency</span><span class="p">(</span><span class="n">NotifiyNodes</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">public</span> <span class="nf">DetectIlGeneratedByDependency</span><span class="p">(</span><span class="n">List</span><span class="p">&lt;</span><span class="n">TypeNode</span><span class="p">&gt;</span> <span class="n">notifyNodes</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">node</span> <span class="k">in</span> <span class="n">notifyNodes</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="kt">var</span> <span class="n">ilGeneratedByDependencyReader</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">IlGeneratedByDependencyReader</span><span class="p">(</span><span class="n">node</span><span class="p">);</span>
+    <span class="n">ilGeneratedByDependencyReader</span><span class="p">.</span><span class="nf">Process</span><span class="p">();</span>
+    <span class="nf">DetectIlGeneratedByDependency</span><span class="p">(</span><span class="n">node</span><span class="p">.</span><span class="n">Nodes</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>在处理节点链中的每个节点时，先创建一个IlGeneratedByDependencyReader对象，
+然后调用它的Process()方法来创建该节点对应的类的属性依赖链。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// PropertyChanged\PropertyChanged.Fody\IlGeneratedByDependencyReader.cs</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">IlGeneratedByDependencyReader</span>
+<span class="p">{</span>
+  <span class="n">TypeNode</span> <span class="n">node</span><span class="p">;</span>
+  <span class="n">Func</span><span class="p">&lt;</span><span class="n">MethodReference</span><span class="p">,</span> <span class="n">MethodDefintion</span><span class="p">,</span> <span class="kt">bool</span><span class="p">&gt;</span> <span class="n">methodComparer</span><span class="p">;</span>
+  <span class="n">Func</span><span class="p">&lt;</span><span class="n">FieldRefernce</span><span class="p">,</span> <span class="n">FieldDefinition</span><span class="p">,</span> <span class="kt">bool</span><span class="p">&gt;</span> <span class="n">fieldComparer</span><span class="p">;</span>
+  <span class="k">public</span> <span class="nf">IlGeneratedByDependencyReader</span><span class="p">(</span><span class="n">TypeNode</span> <span class="n">node</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">node</span> <span class="p">=</span> <span class="n">node</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">public</span> <span class="k">void</span> <span class="nf">Process</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">node</span><span class="p">.</span><span class="n">TypeDefinition</span><span class="p">.</span><span class="n">HasGenericParameters</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">methodComparer</span> <span class="p">=</span> <span class="n">GenericMethodComparer</span><span class="p">;</span>
+      <span class="n">fieldComparer</span> <span class="p">=</span> <span class="n">GenericFieldComparer</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">else</span>
+    <span class="p">{</span>
+      <span class="n">methodComparer</span> <span class="p">=</span> <span class="n">NonGenericMethodComparer</span><span class="p">;</span>
+      <span class="n">fieldComparer</span> <span class="p">=</span> <span class="n">NonGenericFieldComparer</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">property</span> <span class="k">in</span> <span class="n">node</span><span class="p">.</span><span class="n">TypeDefinition</span><span class="p">.</span><span class="n">Properties</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="k">if</span> <span class="p">(!</span><span class="n">property</span><span class="p">.</span><span class="n">CustomAttribute</span><span class="p">.</span><span class="nf">ContainsAttribute</span><span class="p">(</span><span class="s">"PropertyChanged.DoNotNotifyAttribute"</span><span class="p">))</span>
+      <span class="p">{</span>
+        <span class="nf">ProcessGet</span><span class="p">(</span><span class="n">property</span><span class="p">);</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="k">static</span> <span class="kt">bool</span> <span class="nf">GenericMethodComparer</span><span class="p">(</span><span class="n">MethodReference</span> <span class="n">methodReference</span><span class="p">,</span> <span class="n">MethodDefinition</span> <span class="n">methodDefinition</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="n">methodDefinition</span> <span class="p">==</span> <span class="n">methodReference</span><span class="p">.</span><span class="nf">Resolve</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="k">static</span> <span class="kt">bool</span> <span class="nf">NonGenericMethodComparer</span><span class="p">(</span><span class="n">MethodReference</span> <span class="n">methodReference</span><span class="p">,</span> <span class="n">methodDefinition</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="n">methodDefinition</span> <span class="p">==</span> <span class="n">methodReference</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">static</span> <span class="kt">bool</span> <span class="nf">GenericFieldComparer</span><span class="p">(</span><span class="n">FieldReference</span> <span class="n">fieldReference</span><span class="p">,</span> <span class="n">FieldDefinition</span> <span class="n">fieldDefinition</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="n">fieldDefinition</span> <span class="p">==</span> <span class="n">fieldReference</span><span class="p">.</span><span class="nf">Resolve</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="k">static</span> <span class="kt">bool</span> <span class="nf">NonGenericFieldComparer</span><span class="p">(</span><span class="n">FieldReference</span> <span class="n">fieldReference</span><span class="p">,</span> <span class="n">FieldDefinition</span> <span class="n">fieldDefinition</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="n">fieldDefinition</span> <span class="p">==</span> <span class="n">fieldReference</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>这里设置了在构建属性依赖链时需要的变量。注意，对于每个属性，我们只关注它的
+getter，原因是如果一个属性在返回它的值时需要读取另个属性的值，那它们之间
+就存在依赖关系，即当前属性依赖于它要访问的另一个属性。当这个被依赖的属性
+的值发生变化时，依赖它的属性的值自然也改变了。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// PropertyChanged\PropertyChanged.Fody\IlGeneratedByDependencyReader.cs</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">IlGeneratedByDependencyReader</span>
+<span class="p">{</span>
+  <span class="p">...</span>
+  <span class="k">void</span> <span class="nf">ProcessGet</span><span class="p">(</span><span class="n">PropertyDefinition</span> <span class="n">property</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="kt">var</span> <span class="n">getMethod</span> <span class="p">=</span> <span class="n">property</span><span class="p">.</span><span class="n">GetMethod</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">getMethod</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">getMethod</span><span class="p">.</span><span class="n">IsAbstract</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="kt">var</span> <span class="n">recusiveIlFinder</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">RecusiveIlFinder</span><span class="p">(</span><span class="n">property</span><span class="p">.</span><span class="n">DeclaringType</span><span class="p">);</span>
+    <span class="n">recursiveIlFinder</span><span class="p">.</span><span class="nf">Execute</span><span class="p">(</span><span class="n">getMethod</span><span class="p">);</span>
+    <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">instruction</span> <span class="k">in</span> <span class="n">recursiveIlFinder</span><span class="p">.</span><span class="n">Instructions</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="nf">ProcessInstructionForGet</span><span class="p">(</span><span class="n">property</span><span class="p">,</span> <span class="n">instruction</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>这里创建了一个RecursiveIlFinder对象来遍历传入属性的getter的函数体中的指令集。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// PropertyChanged\PropertyChanged.Fody\RecursiveIlFinder.cs</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">RecursiveIlFinder</span>
+<span class="p">{</span>
+  <span class="n">TypeDefinition</span> <span class="n">typeDefinition</span><span class="p">;</span>
+  <span class="n">List</span><span class="p">&lt;</span><span class="n">MethodDefinition</span><span class="p">&gt;</span> <span class="n">processedMethods</span><span class="p">;</span>
+  <span class="k">public</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">Instruction</span><span class="p">&gt;</span> <span class="n">Instructions</span><span class="p">;</span>
+  <span class="k">public</span> <span class="nf">RecursiveIlFinder</span><span class="p">(</span><span class="n">TypeDefinition</span> <span class="n">typeDefinition</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">typeDefinition</span> <span class="p">=</span> <span class="n">typeDefinition</span><span class="p">;</span>
+    <span class="n">Instructions</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">Instruction</span><span class="p">&gt;();</span>
+    <span class="n">processedMethods</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">MethodDefinition</span><span class="p">&gt;();</span>
+  <span class="p">}</span>
+  <span class="k">public</span> <span class="k">void</span> <span class="nf">Execute</span><span class="p">(</span><span class="n">MethodDefinition</span> <span class="n">getMethod</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">processedMethods</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">getMethod</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">getMethod</span><span class="p">.</span><span class="n">Body</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">instruction</span> <span class="k">in</span> <span class="n">getMethod</span><span class="p">.</span><span class="n">Body</span><span class="p">.</span><span class="n">Instructions</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Instructions</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">instruction</span><span class="p">);</span>
+      <span class="k">if</span> <span class="p">(!</span><span class="nf">IsCall</span><span class="p">(</span><span class="n">instruction</span><span class="p">.</span><span class="n">OpCode</span><span class="p">))</span>
+      <span class="p">{</span>
+        <span class="k">continue</span><span class="p">;</span>
+      <span class="p">}</span>
+      <span class="kt">var</span> <span class="n">methodDefinition</span> <span class="p">=</span> <span class="n">instruction</span><span class="p">.</span><span class="n">Operand</span> <span class="k">as</span> <span class="n">MethodDefinition</span><span class="p">;</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">methodDefinition</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+      <span class="p">{</span>
+        <span class="k">continue</span><span class="p">;</span>
+      <span class="p">}</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">methodDefinition</span><span class="p">.</span><span class="n">IsGetter</span> <span class="p">||</span> <span class="n">methodDefinition</span><span class="p">.</span><span class="n">IsSetter</span><span class="p">)</span>
+      <span class="p">{</span>
+        <span class="k">continue</span><span class="p">;</span>
+      <span class="p">}</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">processedMethods</span><span class="p">.</span><span class="nf">Contains</span><span class="p">(</span><span class="n">methodDefinition</span><span class="p">))</span>
+      <span class="p">{</span>
+        <span class="k">continue</span><span class="p">;</span>
+      <span class="p">}</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">methodDefinition</span><span class="p">.</span><span class="n">DeclaringType</span> <span class="p">!=</span> <span class="n">typeDefinition</span><span class="p">)</span>
+      <span class="p">{</span>
+        <span class="k">continue</span><span class="p">;</span>
+      <span class="p">}</span>
+      <span class="nf">Execute</span><span class="p">(</span><span class="n">methodDefinition</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="k">static</span> <span class="kt">bool</span> <span class="nf">IsCall</span><span class="p">(</span><span class="n">OpCode</span> <span class="n">opCode</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="n">opCode</span> <span class="p">==</span> <span class="n">OpCodes</span><span class="p">.</span><span class="n">Call</span> <span class="p">||</span>
+           <span class="n">opCode</span> <span class="p">==</span> <span class="n">OpCodes</span><span class="p">.</span><span class="n">Callvirt</span> <span class="p">||</span>
+           <span class="n">opCode</span> <span class="p">==</span> <span class="n">OpCodes</span><span class="p">.</span><span class="n">Calli</span> <span class="p">||</span>
+           <span class="n">opCode</span> <span class="p">==</span> <span class="n">OpCodes</span><span class="p">.</span><span class="n">ldftn</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>这里可以看出，RecursiveIlFinder对象会建立一个自己的指令集，该指令集包括
+传入的函数的指令集和该函数调用过的其他函数的指令集，它还会递归的包含被
+调用的其他函数的指令集中调用过的其他的函数的指令集。</p>
+
+<p>注意，该对象不会递归的去包含任何类属性的getter或setter函数中的指令集，
+因为没有必要这么做，我们只需要知道该属性的getter会访问其他属性即可。
+另外，它不会递归的包含不声明在当前类中的函数的指令集。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// PropertyChanged\PropertyChanged.Fody\IlGeneratedByDependencyReader.cs</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">IlGeneratedByDependencyReader</span>
+<span class="p">{</span>
+  <span class="p">...</span>
+  <span class="k">void</span> <span class="nf">ProcessInstructionForGet</span><span class="p">(</span><span class="n">PropertyDefinition</span> <span class="n">property</span><span class="p">,</span> <span class="n">Instruction</span> <span class="n">instruction</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nf">IsPropertyGetInstruction</span><span class="p">(</span><span class="n">instruction</span><span class="p">,</span> <span class="k">out</span> <span class="kt">var</span> <span class="n">usedProperty</span><span class="p">)</span> <span class="p">||</span> <span class="nf">IsFieldGetInstruction</span><span class="p">(</span><span class="n">instruction</span><span class="p">,</span> <span class="k">out</span> <span class="n">usedProperty</span><span class="p">))</span>
+    <span class="p">{</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">usedProperty</span> <span class="p">==</span> <span class="n">property</span><span class="p">)</span>
+      <span class="p">{</span>
+        <span class="k">return</span><span class="p">;</span>
+      <span class="p">}</span>
+      <span class="kt">var</span> <span class="n">dependency</span> <span class="p">=</span> <span class="k">new</span> <span class="n">PropertyDependency</span>
+      <span class="p">{</span>
+        <span class="n">ShouldAlsoNotifyFor</span> <span class="p">=</span> <span class="n">property</span><span class="p">,</span>
+        <span class="n">WhenPropertyIsSet</span> <span class="p">=</span> <span class="n">usedProperty</span>
+      <span class="p">};</span>
+      <span class="n">node</span><span class="p">.</span><span class="n">PropertyDependencies</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">dependency</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="k">public</span> <span class="kt">bool</span> <span class="nf">IsPropertyGetInstruction</span><span class="p">(</span><span class="n">Instruction</span> <span class="n">instruction</span><span class="p">,</span> <span class="k">out</span> <span class="n">PropertyDefinition</span> <span class="n">propertyDefinition</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">instruction</span><span class="p">.</span><span class="n">OpCode</span><span class="p">.</span><span class="nf">IsCall</span><span class="p">())</span>
+    <span class="p">{</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">instruction</span><span class="p">.</span><span class="n">Operand</span> <span class="k">is</span> <span class="n">MethodReference</span> <span class="n">methodReference</span><span class="p">)</span>
+      <span class="p">{</span>
+        <span class="kt">var</span> <span class="n">mapping</span> <span class="p">=</span> <span class="n">node</span><span class="p">.</span><span class="n">Mappings</span><span class="p">.</span><span class="nf">FirstOrDefault</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="nf">methodComparer</span><span class="p">(</span><span class="n">methodReference</span><span class="p">,</span> <span class="n">x</span><span class="p">.</span><span class="n">PropertyDefinition</span><span class="p">.</span><span class="n">GetMethod</span><span class="p">));</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">mapping</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+        <span class="p">{</span>
+          <span class="n">propertyDefinition</span> <span class="p">=</span> <span class="n">mapping</span><span class="p">.</span><span class="n">PropertyDefinition</span><span class="p">;</span>
+          <span class="k">return</span> <span class="k">true</span><span class="p">;</span>
+        <span class="p">}</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="n">propertyDefinition</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
+    <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">public</span> <span class="kt">bool</span> <span class="nf">IsFieldGetInstruction</span><span class="p">(</span><span class="n">Instruction</span> <span class="n">instruction</span><span class="p">,</span> <span class="k">out</span> <span class="n">PropertyDefinition</span> <span class="n">propertyDefinition</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">instruction</span><span class="p">.</span><span class="n">OpCode</span><span class="p">.</span><span class="n">Code</span> <span class="p">==</span> <span class="n">Code</span><span class="p">.</span><span class="n">Ldfld</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">instruction</span><span class="p">.</span><span class="n">Operand</span> <span class="k">is</span> <span class="n">FieldReference</span> <span class="n">fieldReference</span><span class="p">)</span>
+      <span class="p">{</span>
+        <span class="kt">var</span> <span class="n">mapping</span> <span class="p">=</span> <span class="n">node</span><span class="p">.</span><span class="n">Mappings</span><span class="p">.</span><span class="nf">FirstOrDefault</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="nf">fieldComparer</span><span class="p">(</span><span class="n">fieldReference</span><span class="p">,</span> <span class="n">x</span><span class="p">.</span><span class="n">FieldDefinition</span><span class="p">));</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">mapping</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+        <span class="p">{</span>
+          <span class="n">propertyDefinition</span> <span class="p">=</span> <span class="n">mapping</span><span class="p">.</span><span class="n">PropertyDefinition</span><span class="p">;</span>
+          <span class="k">return</span> <span class="k">true</span><span class="p">;</span>
+        <span class="p">}</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="n">propertyDefintion</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面的代码遍历RecursiveIlFinder对象中的指令集中的每个指令，如果发现当前
+指令是调用当前类中的某个属性的getter或读取某个字段，就创建一个PropertyDependency
+对象，然后把该对象放进当前节点中的PropertyDependencies数组中，它表示我们
+发现了类中某个属性与另一个属性的依赖关系，这种依赖关系使用PropertyDependency
+类表示。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// PropertyChanged\PropertyChanged.Fody\PropertyDependency.cs</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">PropertyDependency</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="n">PropertyDependency</span> <span class="n">ShouldAlsoNotifyFor</span><span class="p">;</span>
+  <span class="k">public</span> <span class="n">PropertyDependency</span> <span class="n">WhenPropertyIsSet</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>从该类中的结构中可以看出，WhenPropertyIsSet字段表示被依赖的属性，而
+ShouldAlsoNotifyFor字段表示依赖于被依赖的属性的属性。</p>
+
+<p>当所有的指令集被遍历完后，就建立了一个属性依赖链。注意，这种依赖链是
+一种逻辑上的链条。</p>
+
+<p>最后需要注意的是，在建立属性依赖链时，ProcessGet()方法只关注属性的getter。
+那为什么我们不关注属性的setter？实际上，这只有一个种选择，如果我们关注
+setter，那构建依赖链的逻辑就会不同，最后被注入的代码也会不同，但最终
+的效果是一样的。当然，我们没有必要同时关注属性的getter和setter。</p>
+
+<p>除此之外，fody.PropertyChanged允许用户为类的某个属性添加DependsOnAttribute
+特征，它显式的声明该属性依赖于某个其他的属性，这种依赖关系应该被添加到
+该类的属性依赖链中。</p>
+
+<p>这里不展示如何根据类属性的DependsOnAttribute特征，将该特征指向的被依赖
+的属性添加到该类的属性依赖链中。如果感兴趣，请参见文件
+PropertyChanged\PropertyChanged.Fody\DependsOnDataAttributeReader.cs。</p>
+
+  </div>
+
+  
+
+  <a class="u-url" href="/fody.propertychanged/2018/02/11/fody.PropertyChanged.part6.html" hidden></a>
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">读源码</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">
+            
+              读源码
+            
+            </li>
+            
+            <li><a class="u-email" href="mailto:ryanfzyw@gmail.com">ryanfzyw@gmail.com</a></li>
+            
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-2">
+        <ul class="social-media-list">
+  
+  
+  
+  <li><a href="https://github.com/ryanfzy"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg> <span class="username">ryanfzy</span></a></li>
+  
+  
+  
+  
+  
+  
+  
+</ul>
+
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>这里是一个关于阅读源码的网站，这里有我在阅读源码过程中做的笔记，希望这些笔记能对读到它们的人有帮助。 </p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

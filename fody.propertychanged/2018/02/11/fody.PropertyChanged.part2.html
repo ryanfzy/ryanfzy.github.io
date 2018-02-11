@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Begin Jekyll SEO tag v2.4.0 -->
+<title>读fody.PropertyChanged源码（2）：构建TypeNode链 | 读源码</title>
+<meta name="generator" content="Jekyll v3.7.2" />
+<meta property="og:title" content="读fody.PropertyChanged源码（2）：构建TypeNode链" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="fody.PropertyChanged的目标是用户自定义的类，它使用TypeNode类来表示它们。 一个TypeNode对象表示一个类，它包含了关于这个类所需的必要信息。" />
+<meta property="og:description" content="fody.PropertyChanged的目标是用户自定义的类，它使用TypeNode类来表示它们。 一个TypeNode对象表示一个类，它包含了关于这个类所需的必要信息。" />
+<link rel="canonical" href="http://localhost:4000/fody.propertychanged/2018/02/11/fody.PropertyChanged.part2.html" />
+<meta property="og:url" content="http://localhost:4000/fody.propertychanged/2018/02/11/fody.PropertyChanged.part2.html" />
+<meta property="og:site_name" content="读源码" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2018-02-11T00:00:00+13:00" />
+<script type="application/ld+json">
+{"description":"fody.PropertyChanged的目标是用户自定义的类，它使用TypeNode类来表示它们。 一个TypeNode对象表示一个类，它包含了关于这个类所需的必要信息。","@type":"BlogPosting","url":"http://localhost:4000/fody.propertychanged/2018/02/11/fody.PropertyChanged.part2.html","headline":"读fody.PropertyChanged源码（2）：构建TypeNode链","dateModified":"2018-02-11T00:00:00+13:00","datePublished":"2018-02-11T00:00:00+13:00","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/fody.propertychanged/2018/02/11/fody.PropertyChanged.part2.html"},"@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+  <link rel="stylesheet" href="/assets/main.css">
+  <link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="读源码" />
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" rel="author" href="/">读源码</a>
+
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+            <a class="page-link" href="/about/">About</a>
+            
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">读fody.PropertyChanged源码（2）：构建TypeNode链</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2018-02-11T00:00:00+13:00" itemprop="datePublished">
+        
+        Feb 11, 2018
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>fody.PropertyChanged的目标是用户自定义的类，它使用TypeNode类来表示它们。
+一个TypeNode对象表示一个类，它包含了关于这个类所需的必要信息。</p>
+
+<p>类与类之间可能存在继承关系，这种继承关系在TypeNode类中的Nodes属性体现出来。
+它是一个数组，其元素也是TypeNode类。一个TypeNode对象的Nodes属性包含了继承
+了这个类的所有子类。因为类之间的继承关系可能是多层次的，因此这会形成一条
+TypeNode链条。</p>
+
+<p>BuildTypeNodes()方法的主要工作是在当前的模块中找到所有的用户自定义的类，
+过滤掉不需要关心的类，同时根据这些类之间的继承关系，将它们连接在一起。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">void</span> <span class="nf">BuildTypeNodes</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="p">...</span>
+  <span class="n">allClasses</span> <span class="p">=</span> <span class="n">ModuleDefinition</span>
+    <span class="p">.</span><span class="nf">GetTypes</span><span class="p">()</span>
+    <span class="p">.</span><span class="nf">Where</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="n">x</span><span class="p">.</span><span class="n">IsClass</span> <span class="p">&amp;&amp;</span> <span class="n">x</span><span class="p">.</span><span class="n">BaseType</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+    <span class="p">.</span><span class="nf">Where</span><span class="p">(</span><span class="n">extraFilter</span><span class="p">)</span>
+    <span class="p">.</span><span class="nf">ToList</span><span class="p">();</span>
+  <span class="n">Nodes</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">TypeNode</span><span class="p">&gt;();</span>
+  <span class="n">NotifyNodes</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="nf">TypeNode</span><span class="p">();</span>
+  <span class="n">TypeDefinition</span> <span class="n">typeDefinition</span><span class="p">;</span>
+  <span class="k">while</span> <span class="p">((</span><span class="n">typeDefinition</span> <span class="p">=</span> <span class="n">allClasses</span><span class="p">.</span><span class="nf">FirstOrDefault</span><span class="p">())</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="nf">AddClass</span><span class="p">(</span><span class="n">typeDefinition</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="nf">PopulateINotifyNodes</span><span class="p">(</span><span class="n">Nodes</span><span class="p">);</span>
+  <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">notifyNode</span> <span class="k">in</span> <span class="n">NotifiyNodes</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">Nodes</span><span class="p">.</span><span class="nf">Remove</span><span class="p">(</span><span class="n">notifyNode</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="nf">PopulateInjectedINotifyNodes</span><span class="p">(</span><span class="n">Nodes</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面的代码并不复杂。首先，它先找到当前模块中所有的类。然后根据它们之间的
+继承关系，将它们联系再一起。因为不是所有的类都需要进行代码的注入，所以
+这之后，再进行相关的检查，过滤掉那些不需要进行后续处理的类。</p>
+
+<p>最后，对于某些特殊的类，为了方便后续的工作，需要进行一些预处理。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">TypeNode</span> <span class="nf">AddClass</span><span class="p">(</span><span class="n">TypeDefinition</span> <span class="n">typeDefintion</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">allClasses</span><span class="p">.</span><span class="nf">Remove</span><span class="p">(</span><span class="n">typeDefinition</span><span class="p">);</span>
+  <span class="kt">var</span> <span class="n">typeNode</span> <span class="p">=</span> <span class="k">new</span> <span class="n">TypeNode</span>
+  <span class="p">{</span>
+    <span class="n">TypeDefinition</span> <span class="p">=</span> <span class="n">typeDefinition</span>
+  <span class="p">};</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">typeDefinition</span><span class="p">.</span><span class="n">BaseType</span><span class="p">.</span><span class="n">Scope</span><span class="p">.</span><span class="n">Name</span> <span class="p">!=</span> <span class="n">ModuleDefinition</span><span class="p">.</span><span class="n">Name</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">Nodes</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">typeNode</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">else</span>
+  <span class="p">{</span>
+    <span class="kt">var</span> <span class="n">baseType</span> <span class="p">=</span> <span class="nf">Resolve</span><span class="p">(</span><span class="n">typeDefinition</span><span class="p">.</span><span class="n">BaseType</span><span class="p">);</span>
+    <span class="kt">var</span> <span class="n">parentNode</span> <span class="p">=</span> <span class="nf">FindClass</span><span class="p">(</span><span class="n">baseType</span><span class="p">,</span> <span class="n">Nodes</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">parentNode</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">parentNode</span> <span class="p">=</span> <span class="nf">AddClass</span><span class="p">(</span><span class="n">baseType</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="n">parentNode</span><span class="p">.</span><span class="n">Nodes</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">typeNode</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="n">typeNode</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="n">TypeNode</span> <span class="nf">FindClassNode</span><span class="p">(</span><span class="n">TypeDefinition</span> <span class="n">type</span><span class="p">,</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">TypeNode</span><span class="p">&gt;</span> <span class="n">typeNode</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">node</span> <span class="k">in</span> <span class="n">typeNode</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">type</span> <span class="p">==</span> <span class="n">node</span><span class="p">.</span><span class="n">TypeDefinition</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="k">return</span> <span class="n">node</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="kt">var</span> <span class="n">findNode</span> <span class="p">=</span> <span class="nf">FindClassNode</span><span class="p">(</span><span class="n">type</span><span class="p">,</span> <span class="n">node</span><span class="p">.</span><span class="n">Nodes</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">findNode</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="k">return</span> <span class="n">findNode</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>构建TypeNode链的具体方式是，如果模块中的一个类的父类不是在该模块中定义的，
+那它有可能是该模块中的某个类的父类，而绝不是该模块中的任何一个类的子类，
+所以先将它放入Nodes表中。</p>
+
+<p>相反，如果一个类的父类是在该模块中定义的，那它可能是某个类的子类，因此
+需要先找到表示该父类的TypeNode对象，然后将它添加到该对象的Nodes数组中。</p>
+
+<p>寻找父节点的方式是，首先在全局域下的Nodes表中进行搜索，如果该父类曾经被
+检索过，它一定存在于Nodes表中，找到后返回即可。如果找不到该节点，那它
+可能存在于Nodes表中的，某个节点中的Nodes子节点集中，因此需要对这些节点，
+和它们的子节点集的每个节点进行递归搜索。找到后返回该节点。</p>
+
+<p>如果始终找不到这个父类，就表示它不曾被检索过，所以这里使用递归的方式，
+将该父类添加到节点链中。完成后，返回这个被新添加的父节点。</p>
+
+<p>例如，模块中有如下类：</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ClassA
+ClassB : ClassA
+ClassC : ClassB
+ClassD : classB
+ClassE
+</code></pre></div></div>
+
+<p>从中构建出的TypeNode链是：</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ClassA
++- ClassB
+   +- ClassC
+   +- ClassD
+ClassE
+</code></pre></div></div>
+
+<p>在构建好表示当前模块中的所有的类和它们之间的继承关系的TypeNode链后，接下来
+从中选出那些需要被进一步处理的类。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">void</span> <span class="nf">PopulateINotifyNodes</span><span class="p">(</span><span class="n">List</span><span class="p">&lt;</span><span class="n">TypeNode</span><span class="p">&gt;</span> <span class="n">typeNodes</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">node</span> <span class="k">in</span> <span class="n">typeNodes</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nf">HierarchyImplementsINotify</span><span class="p">(</span><span class="n">node</span><span class="p">.</span><span class="n">TypeDefinition</span><span class="p">))</span>
+    <span class="p">{</span>
+      <span class="n">NotifyNodes</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">node</span><span class="p">);</span>
+      <span class="k">continue</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="nf">PopulateINotifyNodes</span><span class="p">(</span><span class="n">node</span><span class="p">.</span><span class="n">Nodes</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// NotifyInterfaceFinder.cs</span>
+<span class="k">public</span> <span class="kt">bool</span> <span class="nf">HierarchyImplementsINotify</span><span class="p">(</span><span class="n">TypeReference</span> <span class="n">typeReference</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="kt">var</span> <span class="n">fullName</span> <span class="p">=</span> <span class="n">typeReference</span><span class="p">.</span><span class="n">FullName</span><span class="p">;</span>
+  <span class="p">...</span>
+  <span class="n">TypeDefinition</span> <span class="n">typeDefinition</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">typeReference</span><span class="p">.</span><span class="n">IsDefinition</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">typeDefinition</span> <span class="p">=</span> <span class="p">(</span><span class="n">TypeDefinition</span><span class="p">)</span><span class="n">typeReference</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">else</span>
+  <span class="p">{</span>
+    <span class="n">typeDefinition</span> <span class="p">=</span> <span class="nf">Resolve</span><span class="p">(</span><span class="n">typeReference</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">if</span> <span class="p">(</span><span class="nf">HasPropertyChangedEvent</span><span class="p">(</span><span class="n">typeDefinition</span><span class="p">))</span>
+  <span class="p">{</span>
+    <span class="p">...</span>
+    <span class="k">return</span> <span class="k">true</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">if</span> <span class="p">(</span><span class="nf">HasPropertyChangedField</span><span class="p">(</span><span class="n">typeDefinition</span><span class="p">))</span>
+  <span class="p">{</span>
+    <span class="p">...</span>
+    <span class="k">return</span> <span class="k">true</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="kt">var</span> <span class="n">baseType</span> <span class="p">=</span> <span class="n">typeDefinition</span><span class="p">.</span><span class="n">BaseType</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">baseType</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="p">...</span>
+    <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="kt">var</span> <span class="n">baseTypeImplementsINotify</span> <span class="p">=</span> <span class="nf">HierarchyImplementsINotify</span><span class="p">(</span><span class="n">baseType</span><span class="p">);</span>
+  <span class="p">...</span>
+  <span class="k">return</span> <span class="n">baseTypeImplementsINotify</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面的函数的作用是辨别那些需要被后续处理的类。这里省略了一些帮助提升
+效率的代码，只展现它的主要逻辑。</p>
+
+<p>这里的逻辑并不复杂，其中一个判断的逻辑是，如果一个类声明了一个类型为
+PropertyChangedEventHandler的事件处理器，同时它的名字为PropertyChanged，
+那它就需要被后续处理。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">HasPropertyChangedEvent</span><span class="p">(</span><span class="n">TypeDefinition</span> <span class="n">typeDefinition</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">return</span> <span class="n">typeDefinition</span><span class="p">.</span><span class="n">Events</span><span class="p">.</span><span class="nf">Any</span><span class="p">(</span><span class="n">IsPropertyChangedEvent</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">public</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">IsPropertyChangedEvent</span><span class="p">(</span><span class="n">EventDefinition</span> <span class="n">eventDefinition</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">return</span> <span class="nf">IsNamedPropertyChagned</span><span class="p">(</span><span class="n">eventDefinition</span><span class="p">)</span> <span class="p">&amp;&amp;</span> <span class="nf">IsPropertyChangedEventHandler</span><span class="p">(</span><span class="n">eventDefinition</span><span class="p">.</span><span class="n">EventType</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="kt">bool</span> <span class="nf">IsNamedPropertyChanged</span><span class="p">(</span><span class="n">EventDefinition</span> <span class="n">eventDefinition</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">return</span> <span class="n">eventDefinition</span><span class="p">.</span><span class="n">Name</span> <span class="p">=</span> <span class="s">"PropertyChanged"</span> <span class="p">||</span>
+         <span class="n">eventDefinition</span><span class="p">.</span><span class="n">Name</span> <span class="p">==</span> <span class="s">"System.ComponentModel.INotifyPropertyChanged.PropertyChanged"</span> <span class="p">||</span>
+         <span class="n">eventDefinition</span><span class="p">.</span><span class="n">Name</span> <span class="p">==</span> <span class="s">"Windows.UI.Xaml.Data.PropertyChanged"</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">public</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">IsPropertyChagnedEventHandler</span><span class="p">(</span><span class="n">TypeReference</span> <span class="n">typeReference</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">return</span> <span class="n">typeReference</span><span class="p">.</span><span class="n">FullName</span> <span class="p">==</span> <span class="s">"System.ComponentModel.PropertyChangedEventHandler"</span> <span class="p">||</span>
+         <span class="n">typeReference</span><span class="p">.</span><span class="n">FullName</span> <span class="p">==</span> <span class="s">"Windows.UI.Xaml.Data.PropertyChangedEventHandler"</span> <span class="p">||</span>
+         <span class="n">typeReference</span><span class="p">.</span><span class="n">FullName</span> <span class="p">==</span> <span class="s">"System.Runtime.InteropServices.WindowsRuntime.EventRegistrationTokenTable`1&lt;Windows.UI.Xaml.Data.PropertyChangedEventHnadler&gt;"</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>HasPropertyChangedField()函数在这里忽略，它针对于用F#编写的代码。</p>
+
+<p>需要注意两点。第一，PopulateINotifyNodes()函数将需要关注的节点从Nodes表
+中添加到NotifyNodes表中。</p>
+
+<p>第二，在PopulateINotifyNodes()函数里的迭代过程中，如果一个节点不符合
+被后续处理的标准，仍然需要对它的子节点进行相同的检查。如果找到了符合
+标准的节点，就不需要再检查它的子节点，这是因为子类继承了父类的特性，
+所以它们肯定也需要被后续处理。</p>
+
+<p>例如，模块有如下的类，其中带*的是符合标准的类：</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ClassA*
+ClassB
+  ClassC*
+    ClassD
+</code></pre></div></div>
+
+<p>其中需要被后续处理的类是：</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ClassA
+ClassC
+  ClassD
+</code></pre></div></div>
+
+<p>代码进行到这里时，我们并没有找到所有需要被后续处理的类。因为fody.PropertyChanged
+提供了，通过只为一个类添加某个特定的属性，自动为该类实现需要的功能的特性，
+所以我们需要找到这些类。这个特定的属性是AddINotifyPropertyChangedInterfaceAttribute。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">void</span> <span class="nf">PopulateInjectedINotifyNodes</span><span class="p">(</span><span class="n">List</span><span class="p">&lt;</span><span class="n">TypeNode</span><span class="p">&gt;</span> <span class="n">typeNodes</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">node</span> <span class="k">in</span> <span class="n">typeNodes</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nf">HasNotifyPropertyChangedAttribute</span><span class="p">(</span><span class="n">node</span><span class="p">.</span><span class="n">TypeDefinition</span><span class="p">))</span>
+    <span class="p">{</span>
+      <span class="p">...</span>
+      <span class="nf">InjectINotifyPropertyChangedInterface</span><span class="p">(</span><span class="n">node</span><span class="p">.</span><span class="n">TypeDefinition</span><span class="p">);</span>
+      <span class="n">NotifyNodes</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">node</span><span class="p">);</span>
+      <span class="k">continue</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="nf">PopulateInjectedINotifyNodes</span><span class="p">(</span><span class="n">node</span><span class="p">.</span><span class="n">Nodes</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="kt">bool</span> <span class="nf">HasNotifyPropertyChangedAttribute</span><span class="p">(</span><span class="n">TypeDefinition</span> <span class="n">typeDefinition</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">return</span> <span class="n">typeDefinition</span><span class="p">.</span><span class="n">CustomAttributes</span><span class="p">.</span><span class="nf">ContainsAttribute</span><span class="p">(</span><span class="s">"PropertyChanged.AddINotifyPropetyChangedInterfaceAttribute"</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>从这里可以看出，当找到一个被该属性标记的类后，立刻为该类注入添加和实现
+INotifyPropertyChanged接口的代码，然后将它们添加到NotifyNodes表中。
+这么做的原因是，在后续对这些类进行处理时，需要它们必须已经实现了
+INotifyPropertyChanged接口为基础。</p>
+
+<p>fody.PropertyChanged在为用户提供便利的同时，也提供了让用户从节点链中
+剔除某些类的功能。对比那些不需要的类，可以为它们标注DoNotNotifyAttribute
+属性。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">void</span> <span class="nf">CleanDoNotNotifyTypes</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="nf">Process</span><span class="p">(</span><span class="n">NotifyNodes</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">void</span> <span class="nf">Process</span><span class="p">(</span><span class="n">List</span><span class="p">&lt;</span><span class="n">TypeNode</span><span class="p">&gt;</span> <span class="n">notifyNodes</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">node</span> <span class="k">in</span> <span class="n">notifyNodes</span><span class="p">.</span><span class="nf">ToList</span><span class="p">())</span>
+  <span class="p">{</span>
+    <span class="kt">var</span> <span class="n">containsDoNotNotifyAttribute</span> <span class="p">=</span> <span class="n">node</span><span class="p">.</span><span class="n">TypeDefinition</span><span class="p">.</span><span class="n">CustomAttributes</span><span class="p">.</span><span class="nf">ContainsAttribute</span><span class="p">(</span><span class="s">"PropertyChanged.DoNotNotifyAttribute"</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">containsDoNotNotifyAttribute</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">notifyNodes</span><span class="p">.</span><span class="nf">Remove</span><span class="p">(</span><span class="n">node</span><span class="p">);</span>
+      <span class="k">continue</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="nf">Process</span><span class="p">(</span><span class="n">node</span><span class="p">.</span><span class="n">Nodes</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>到这里为止，我们找到了所有需要被fody.PropertyChanged进行代码注入的类。</p>
+
+  </div>
+
+  
+
+  <a class="u-url" href="/fody.propertychanged/2018/02/11/fody.PropertyChanged.part2.html" hidden></a>
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">读源码</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">
+            
+              读源码
+            
+            </li>
+            
+            <li><a class="u-email" href="mailto:ryanfzyw@gmail.com">ryanfzyw@gmail.com</a></li>
+            
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-2">
+        <ul class="social-media-list">
+  
+  
+  
+  <li><a href="https://github.com/ryanfzy"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg> <span class="username">ryanfzy</span></a></li>
+  
+  
+  
+  
+  
+  
+  
+</ul>
+
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>这里是一个关于阅读源码的网站，这里有我在阅读源码过程中做的笔记，希望这些笔记能对读到它们的人有帮助。 </p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>
