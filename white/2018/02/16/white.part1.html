@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Begin Jekyll SEO tag v2.4.0 -->
+<title>读white源码（1）：启动要测试的程序 | 读源码</title>
+<meta name="generator" content="Jekyll v3.7.2" />
+<meta property="og:title" content="读white源码（1）：启动要测试的程序" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="我们可以用下面的代码启动要测试的应用，然后获取要测试的应用的窗口对象。" />
+<meta property="og:description" content="我们可以用下面的代码启动要测试的应用，然后获取要测试的应用的窗口对象。" />
+<link rel="canonical" href="http://localhost:4000/white/2018/02/16/white.part1.html" />
+<meta property="og:url" content="http://localhost:4000/white/2018/02/16/white.part1.html" />
+<meta property="og:site_name" content="读源码" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2018-02-16T00:00:00+13:00" />
+<script type="application/ld+json">
+{"description":"我们可以用下面的代码启动要测试的应用，然后获取要测试的应用的窗口对象。","@type":"BlogPosting","url":"http://localhost:4000/white/2018/02/16/white.part1.html","headline":"读white源码（1）：启动要测试的程序","dateModified":"2018-02-16T00:00:00+13:00","datePublished":"2018-02-16T00:00:00+13:00","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/white/2018/02/16/white.part1.html"},"@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+  <link rel="stylesheet" href="/assets/main.css">
+  <link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="读源码" />
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" rel="author" href="/">读源码</a>
+
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+            <a class="page-link" href="/about/">About</a>
+            
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">读white源码（1）：启动要测试的程序</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2018-02-16T00:00:00+13:00" itemprop="datePublished">
+        
+        Feb 16, 2018
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>我们可以用下面的代码启动要测试的应用，然后获取要测试的应用的窗口对象。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">string</span> <span class="n">exePath</span> <span class="p">=</span> <span class="s">"..."</span><span class="p">;</span>
+<span class="n">ScreenRepository</span> <span class="n">repo</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">ScreenRepository</span><span class="p">(</span><span class="n">Application</span><span class="p">.</span><span class="nf">Launch</span><span class="p">(</span><span class="n">exePath</span><span class="p">));</span>
+<span class="n">AppMainScreen</span> <span class="n">screen</span> <span class="p">=</span> <span class="n">repo</span><span class="p">.</span><span class="n">Get</span><span class="p">&lt;</span><span class="n">AppMainScreen</span><span class="p">&gt;(</span><span class="s">"title..."</span><span class="p">,</span> <span class="n">InitializeOption</span><span class="p">.</span><span class="n">NoCache</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>这里，我们看一下程序是如何启动的。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// White\src\TestStack.White\Application.cs</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">Application</span> <span class="p">:</span> <span class="n">IDisposable</span>
+<span class="p">{</span>
+  <span class="k">private</span> <span class="k">readonly</span> <span class="n">Process</span> <span class="n">process</span><span class="p">;</span>
+  <span class="k">private</span> <span class="k">readonly</span> <span class="n">ApplicationSession</span> <span class="n">applicationSession</span><span class="p">;</span>
+  <span class="k">private</span> <span class="k">readonly</span> <span class="n">WindowFactory</span> <span class="n">windowFactory</span><span class="p">;</span>
+
+  <span class="k">public</span> <span class="k">static</span> <span class="n">Application</span> <span class="nf">Lauch</span><span class="p">(</span><span class="n">exectable</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="kt">var</span> <span class="n">processStartInfo</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">ProcessStartInfo</span><span class="p">(</span><span class="n">executable</span><span class="p">);</span>
+    <span class="k">return</span> <span class="nf">Launch</span><span class="p">(</span><span class="n">processStartInfo</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">public</span> <span class="k">static</span> <span class="n">Application</span> <span class="nf">Launch</span><span class="p">(</span><span class="n">ProcessStartInfo</span> <span class="n">processStartInfo</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="p">...</span>
+    <span class="n">Process</span> <span class="n">process</span><span class="p">;</span>
+    <span class="k">try</span>
+    <span class="p">{</span>
+      <span class="n">process</span> <span class="p">=</span> <span class="n">Process</span><span class="p">.</span><span class="nf">Start</span><span class="p">(</span><span class="n">processStartInfo</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="n">Win32Exception</span> <span class="n">ex</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="p">...</span>
+      <span class="k">throw</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="p">...</span>
+    <span class="k">return</span> <span class="nf">Attach</span><span class="p">(</span><span class="n">process</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">public</span> <span class="k">static</span> <span class="n">Application</span> <span class="nf">Attach</span><span class="p">(</span><span class="n">Process</span> <span class="n">process</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="k">new</span> <span class="nf">Application</span><span class="p">(</span><span class="n">process</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">private</span> <span class="nf">Application</span><span class="p">(</span><span class="n">Process</span> <span class="n">process</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">process</span> <span class="p">=</span> <span class="n">proccess</span><span class="p">;</span>
+    <span class="n">applicationSession</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">ApplicationSession</span><span class="p">();</span>
+    <span class="n">applicationSession</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+    <span class="n">windowFactory</span> <span class="p">=</span> <span class="n">WindowFactory</span><span class="p">.</span><span class="n">Desktop</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>启动程序的过程中，white会创建一个Application对象，该对象负责启动我们
+指定的程序。</p>
+
+<p>启动后的程序会封装在一个Process对象里，该对象的类型是System.Diagnostics.Process，
+它包含关于一个进程的所有信息。</p>
+
+<p>Application对象另外还会创建一个新的ApplicationSession对象，将自身与该对象
+相关联。</p>
+
+<p>除此之外，从代码中可以看出，Application类提供了不同的方式来启动程序。</p>
+
+  </div>
+
+  
+
+  <a class="u-url" href="/white/2018/02/16/white.part1.html" hidden></a>
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">读源码</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">
+            
+              读源码
+            
+            </li>
+            
+            <li><a class="u-email" href="mailto:ryanfzyw@gmail.com">ryanfzyw@gmail.com</a></li>
+            
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-2">
+        <ul class="social-media-list">
+  
+  
+  
+  <li><a href="https://github.com/ryanfzy"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg> <span class="username">ryanfzy</span></a></li>
+  
+  
+  
+  
+  
+  
+  
+</ul>
+
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>这里是一个关于阅读源码的网站，这里有我在阅读源码过程中做的笔记，希望这些笔记能对读到它们的人有帮助。 </p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>
