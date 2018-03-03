@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Begin Jekyll SEO tag v2.4.0 -->
+<title>读white源码（6）：Button | 读源码</title>
+<meta name="generator" content="Jekyll v3.7.2" />
+<meta property="og:title" content="读white源码（6）：Button" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="我们可以用下面的代码启动要测试的应用，然后获取应用的窗口对象，接着鼠标 单击窗口上TestButton按钮。" />
+<meta property="og:description" content="我们可以用下面的代码启动要测试的应用，然后获取应用的窗口对象，接着鼠标 单击窗口上TestButton按钮。" />
+<link rel="canonical" href="http://localhost:4000/white/2018/03/03/white.part6.html" />
+<meta property="og:url" content="http://localhost:4000/white/2018/03/03/white.part6.html" />
+<meta property="og:site_name" content="读源码" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2018-03-03T00:00:00+13:00" />
+<script type="application/ld+json">
+{"description":"我们可以用下面的代码启动要测试的应用，然后获取应用的窗口对象，接着鼠标 单击窗口上TestButton按钮。","@type":"BlogPosting","url":"http://localhost:4000/white/2018/03/03/white.part6.html","headline":"读white源码（6）：Button","dateModified":"2018-03-03T00:00:00+13:00","datePublished":"2018-03-03T00:00:00+13:00","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/white/2018/03/03/white.part6.html"},"@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+  <link rel="stylesheet" href="/assets/main.css">
+  <link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="读源码" />
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" rel="author" href="/">读源码</a>
+
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+            <a class="page-link" href="/about/">About</a>
+            
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">读white源码（6）：Button</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2018-03-03T00:00:00+13:00" itemprop="datePublished">
+        
+        Mar 3, 2018
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>我们可以用下面的代码启动要测试的应用，然后获取应用的窗口对象，接着鼠标
+单击窗口上TestButton按钮。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">string</span> <span class="n">exePath</span> <span class="p">=</span> <span class="s">"..."</span><span class="p">;</span>
+<span class="n">ScreenRepository</span> <span class="n">repo</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">ScreenRepository</span><span class="p">(</span><span class="n">Application</span><span class="p">.</span><span class="nf">Launch</span><span class="p">(</span><span class="n">exePath</span><span class="p">));</span>
+<span class="n">AppMainScreen</span> <span class="n">screen</span> <span class="p">=</span> <span class="n">repo</span><span class="p">.</span><span class="n">Get</span><span class="p">&lt;</span><span class="n">AppMainScreen</span><span class="p">&gt;(</span><span class="s">"title..."</span><span class="p">,</span> <span class="n">InitializeOption</span><span class="p">.</span><span class="n">NoCache</span><span class="p">);</span>
+<span class="n">screen</span><span class="p">.</span><span class="n">TestButton</span><span class="p">.</span><span class="nf">Click</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>下面我们看看当调用TestButton的Click()方法时发生了什么。</p>
+
+<p>已知当white创建用户自定义窗口类对象时，会为对象中的每个控件对象创建一个
+代理对象。当用户第一次访问这些代理对象时，white才会创建一个真实的控件
+对象。</p>
+
+<p>控件的创建工作是DictionaryMappedItemFactory类完成的。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// White\src\TestStack.White\Factory\DictionaryMappedItemFactory.cs</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">DictionaryMappedItemFactory</span> <span class="p">:</span> <span class="n">IUIItemFactory</span>
+<span class="p">{</span>
+  <span class="p">...</span>
+  <span class="k">public</span> <span class="n">IUIItem</span> <span class="nf">Create</span><span class="p">(</span><span class="n">AutomationElement</span> <span class="n">automationElement</span><span class="p">,</span> <span class="n">Type</span> <span class="n">itemType</span><span class="p">,</span> <span class="n">IActionListener</span> <span class="n">actionListener</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="p">...</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">IUIItem</span><span class="p">)</span><span class="n">Activator</span><span class="p">.</span><span class="nf">CreateInstance</span><span class="p">(</span><span class="n">itemType</span><span class="p">,</span> <span class="n">automationElement</span><span class="p">,</span> <span class="n">actionListener</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>它创建控件对象时会为控件类的构造函数传入原生的AutomationElement对象。
+我们接下来要讨论的内容建立在将要被创建的控件是按钮。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// White\src\TestStack.White\UIItems\Button.cs</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">Button</span> <span class="p">:</span> <span class="n">UIItem</span>
+<span class="p">{</span>
+  <span class="p">...</span>
+  <span class="k">public</span> <span class="nf">Button</span><span class="p">(</span><span class="n">AutomationElement</span> <span class="n">automationElement</span><span class="p">,</span> <span class="n">IActionListener</span> <span class="n">actionListener</span><span class="p">)</span> <span class="p">:</span> <span class="k">base</span><span class="p">(</span><span class="n">automationElement</span><span class="p">,</span> <span class="n">actionListener</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="p">...</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// White\src\TestStack.White\UIItems\UIItem.cs</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">UIItem</span> <span class="p">:</span> <span class="n">IUIItem</span>
+<span class="p">{</span>
+  <span class="k">protected</span> <span class="k">readonly</span> <span class="n">AutomationElement</span> <span class="n">automationElement</span><span class="p">;</span>
+  <span class="k">internal</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">Mouse</span> <span class="n">mouse</span> <span class="p">=</span> <span class="n">Mouse</span><span class="p">.</span><span class="n">Intance</span><span class="p">;</span>
+  <span class="p">...</span>
+  <span class="k">public</span> <span class="nf">UIItem</span><span class="p">(</span><span class="n">AutomationElement</span> <span class="n">automationElement</span><span class="p">,</span> <span class="n">IActionListener</span> <span class="n">actionListener</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="p">...</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">automationElement</span> <span class="p">=</span> <span class="n">automationElement</span><span class="p">;</span>
+    <span class="p">...</span>
+  <span class="p">}</span>
+  <span class="k">public</span> <span class="k">virtual</span> <span class="n">Rect</span> <span class="n">Bounds</span>
+  <span class="p">{</span>
+    <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="n">automationElement</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">BoundingRectangle</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+  <span class="k">public</span> <span class="k">virtual</span> <span class="k">void</span> <span class="nf">Click</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="p">...</span>
+    <span class="nf">PerformIfValid</span><span class="p">(</span><span class="n">PerformCick</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">public</span> <span class="k">void</span> <span class="nf">PerformClick</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="p">...</span>
+    <span class="kt">var</span> <span class="n">bounds</span> <span class="p">=</span> <span class="n">Bounds</span><span class="p">;</span>
+    <span class="p">...</span>
+    <span class="n">mouse</span><span class="p">.</span><span class="nf">Click</span><span class="p">(</span><span class="n">bounds</span><span class="p">.</span><span class="nf">Center</span><span class="p">(),</span> <span class="n">actionListener</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>在white中每个控件都继承自UIItem类，Button类的Click()方法也是在这个父类
+中定义的。从上面的代码中可以看出，单击的行为发生在PerformClick()方法中，
+还能看到这个行为的本质是鼠标单击在控件上的中心位置。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// White\src\TestStack.White\InputDevices\Mouse.cs</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">Mouse</span> <span class="p">:</span> <span class="n">IMouse</span>
+<span class="p">{</span>
+  <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"user32"</span><span class="p">,</span> <span class="n">EntryPoint</span><span class="p">=</span><span class="s">"SendInput"</span><span class="p">)]</span>
+  <span class="k">static</span> <span class="k">extern</span> <span class="kt">int</span> <span class="nf">SendInput</span><span class="p">(</span><span class="kt">uint</span> <span class="n">numberOfInputs</span><span class="p">,</span> <span class="k">ref</span> <span class="n">Input</span> <span class="n">input</span><span class="p">,</span> <span class="kt">int</span> <span class="n">structSize</span><span class="p">);</span>
+  <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"user32"</span> <span class="n">EntryPoint</span><span class="p">=</span><span class="s">"SendInput"</span><span class="p">)]</span>
+  <span class="k">static</span> <span class="k">extern</span> <span class="kt">int</span> <span class="nf">SendInput64</span><span class="p">(</span><span class="kt">int</span> <span class="n">numberOfInputs</span><span class="p">,</span> <span class="k">ref</span> <span class="n">Input64</span> <span class="n">input</span><span class="p">,</span> <span class="kt">int</span> <span class="n">structSize</span><span class="p">);</span>
+  <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"user32.dll"</span><span class="p">)]</span>
+  <span class="k">static</span> <span class="k">extern</span> <span class="kt">bool</span> <span class="nf">SetCursorPos</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">,</span> <span class="kt">int</span> <span class="n">y</span><span class="p">);</span>
+  <span class="p">...</span>
+  <span class="k">public</span> <span class="k">static</span> <span class="n">Mouse</span> <span class="n">Instance</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Mouse</span><span class="p">();</span>
+  <span class="nf">Mouse</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="p">...</span>
+  <span class="p">}</span>
+  <span class="k">public</span> <span class="k">virtual</span> <span class="n">Point</span> <span class="n">Location</span>
+  <span class="p">{</span>
+    <span class="p">...</span>
+    <span class="k">set</span>
+    <span class="p">{</span>
+      <span class="p">...</span>
+      <span class="nf">SetCursorPos</span><span class="p">((</span><span class="kt">int</span><span class="p">)</span><span class="k">value</span><span class="p">.</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="kt">int</span><span class="p">).</span><span class="k">value</span><span class="p">.</span><span class="n">Y</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+  <span class="k">public</span> <span class="k">virtual</span> <span class="k">void</span> <span class="nf">Click</span><span class="p">(</span><span class="n">Point</span> <span class="n">point</span><span class="p">,</span> <span class="n">IActionListener</span> <span class="n">actionListener</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="nf">Click</span><span class="p">(</span><span class="n">MouseButton</span><span class="p">.</span><span class="n">Left</span><span class="p">,</span> <span class="n">point</span><span class="p">,</span> <span class="n">actionListener</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">public</span> <span class="k">virtual</span> <span class="k">void</span> <span class="nf">Click</span><span class="p">(</span><span class="n">MouseButton</span> <span class="n">mouseButton</span><span class="p">,</span> <span class="n">Point</span> <span class="n">point</span><span class="p">,</span> <span class="n">IActionListener</span> <span class="n">actionListener</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">Location</span> <span class="p">=</span> <span class="n">point</span><span class="p">;</span>
+    <span class="nf">Click</span><span class="p">(</span><span class="n">mouseButton</span><span class="p">);</span>
+    <span class="p">...</span>
+  <span class="p">}</span>
+  <span class="k">public</span> <span class="k">virtual</span> <span class="k">void</span> <span class="nf">Click</span><span class="p">(</span><span class="n">MouseButton</span> <span class="n">mouseButton</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="p">...</span>
+    <span class="nf">MouseButtonUpAndDown</span><span class="p">(</span><span class="n">mouseButton</span><span class="p">);</span>
+    <span class="p">...</span>
+  <span class="p">}</span>
+  <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">MouseButtonUpAndDown</span><span class="p">(</span><span class="n">MouseButton</span> <span class="n">mouseButton</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="nf">MouseButtonDown</span><span class="p">(</span><span class="n">mouseButton</span><span class="p">);</span>
+    <span class="nf">MouseButtonUp</span><span class="p">(</span><span class="n">mouseButton</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">MouseButtonDown</span><span class="p">(</span><span class="n">MouseButton</span> <span class="n">mouseButton</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="nf">SendInput</span><span class="p">(</span><span class="n">InputFactory</span><span class="p">.</span><span class="nf">Mouse</span><span class="p">(</span><span class="nf">GetInputForButton</span><span class="p">(</span><span class="n">mouseButton</span><span class="p">,</span> <span class="k">true</span><span class="p">)));</span>
+  <span class="p">}</span>
+  <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">MouseButtonUp</span><span class="p">(</span><span class="n">MouseButton</span> <span class="n">mouseButton</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="nf">SendInput</span><span class="p">(</span><span class="n">InputFactory</span><span class="p">.</span><span class="nf">Mouse</span><span class="p">(</span><span class="nf">GetInputForButton</span><span class="p">(</span><span class="n">mouseButton</span><span class="p">,</span> <span class="k">false</span><span class="p">)));</span>
+  <span class="p">}</span>
+  <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">SendInput</span><span class="p">(</span><span class="n">Input</span> <span class="n">input</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">IntPtr</span><span class="p">.</span><span class="n">Size</span> <span class="p">==</span> <span class="m">4</span><span class="p">)</span>
+      <span class="nf">SendInput</span><span class="p">(</span><span class="m">1</span><span class="p">,</span> <span class="k">ref</span> <span class="n">input</span><span class="p">,</span> <span class="n">Marshal</span><span class="p">.</span><span class="nf">SizeOf</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">Input</span><span class="p">)));</span>
+    <span class="k">else</span>
+    <span class="p">{</span>
+      <span class="kt">var</span> <span class="n">input64</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Input64</span><span class="p">(</span><span class="n">input</span><span class="p">);</span>
+      <span class="nf">SendInput64</span><span class="p">(</span><span class="m">1</span><span class="p">,</span> <span class="k">ref</span> <span class="n">input64</span><span class="p">,</span> <span class="n">Marshal</span><span class="p">.</span><span class="nf">SizeOf</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">Input</span><span class="p">)));</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>在Mouse类中，鼠标单击的行为是通过调用user32.dll中的相应方法模拟出来。
+该类先将鼠标移动到目标控件的中心位置，然后向Windows系统发送鼠标下击和
+松开的消息来模拟鼠标单击事件。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// White\src\TestStack.White\InputDevices\Mouse.cs</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">Mouse</span> <span class="p">:</span> <span class="n">IMouse</span>
+<span class="p">{</span>
+  <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"user32.dll"</span><span class="p">)]</span>
+  <span class="k">static</span> <span class="k">extern</span> <span class="n">IntPtr</span> <span class="nf">GetMessageExtraInfo</span><span class="p">();</span>
+  <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"user32.dll"</span><span class="p">)]</span>
+  <span class="k">static</span> <span class="k">extern</span> <span class="kt">int</span> <span class="nf">GetSystemMetrics</span><span class="p">(</span><span class="n">SystemMetrics</span> <span class="n">smIndex</span><span class="p">);</span>
+  <span class="p">...</span>
+  <span class="k">private</span> <span class="k">static</span> <span class="kt">int</span> <span class="n">LeftMouseButtonDown</span>
+  <span class="p">{</span>
+    <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="nf">GetSystemMetrics</span><span class="p">(</span><span class="n">SystemMetrics</span><span class="p">.</span><span class="n">SM_SWAPBUTTON</span><span class="p">)</span> <span class="p">==</span> <span class="m">0</span> <span class="p">?</span> <span class="n">WindowsConstants</span><span class="p">.</span><span class="n">MOUSEEVENTF_LEFTDOWN</span> <span class="p">:</span> <span class="n">WindowsConstants</span><span class="p">.</span><span class="n">MOUSEEVENTF_RIGHTDOWN</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="k">private</span> <span class="k">static</span> <span class="kt">int</span> <span class="n">LeftMouseButtonUp</span>
+  <span class="p">{</span>
+    <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="nf">GetSystemMetrics</span><span class="p">(</span><span class="n">SystemMetrics</span><span class="p">.</span><span class="n">SM_SWAPBUTTON</span><span class="p">)</span> <span class="p">==</span> <span class="m">0</span> <span class="p">?</span> <span class="n">WindowsConstants</span><span class="p">.</span><span class="n">MOUSEEVENTF_LEFTUP</span> <span class="p">:</span> <span class="n">WindowsConstants</span><span class="p">.</span><span class="n">MOUSEEVENTF_RIGHTUP</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+  <span class="k">private</span> <span class="k">static</span> <span class="n">MouseInput</span> <span class="nf">GetInputForButton</span><span class="p">(</span><span class="n">MouseButton</span> <span class="n">mouseButton</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">isDown</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">switch</span> <span class="p">(</span><span class="n">mouseButton</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="k">case</span> <span class="n">MouseButton</span><span class="p">.</span><span class="n">Left</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nf">MouseInput</span><span class="p">(</span><span class="n">isDown</span> <span class="p">?</span> <span class="n">LeftMouseButtonDown</span> <span class="p">:</span> <span class="n">LeftMouseButtonUp</span><span class="p">);</span>
+      <span class="p">...</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="k">private</span> <span class="k">static</span> <span class="n">MouseInput</span> <span class="nf">MouseInput</span><span class="p">(</span><span class="kt">int</span> <span class="n">command</span><span class="p">,</span> <span class="kt">int</span> <span class="n">mouseData</span> <span class="p">=</span> <span class="m">0</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="k">new</span> <span class="nf">MouseInput</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="nf">GetMessageExtraInfo</span><span class="p">(),</span> <span class="n">mouseData</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+
+<span class="na">[StructLayout(LayoutKind.Sequential)]</span>
+<span class="k">public</span> <span class="k">struct</span> <span class="nc">MouseInput</span>
+<span class="p">{</span>
+  <span class="k">private</span> <span class="k">readonly</span> <span class="kt">int</span> <span class="n">dx</span><span class="p">;</span>
+  <span class="k">private</span> <span class="k">readonly</span> <span class="kt">int</span> <span class="n">dy</span><span class="p">;</span>
+  <span class="k">private</span> <span class="k">readonly</span> <span class="kt">int</span> <span class="n">mouseData</span><span class="p">;</span>
+  <span class="k">private</span> <span class="n">reaodnly</span> <span class="n">dwFlags</span><span class="p">;</span>
+  <span class="k">private</span> <span class="k">readonly</span> <span class="kt">int</span> <span class="n">time</span><span class="p">;</span>
+  <span class="k">private</span> <span class="k">readonly</span> <span class="n">IntPtr</span> <span class="n">dwExtraInfo</span><span class="p">;</span>
+  <span class="k">public</span> <span class="nf">MouseInput</span><span class="p">(</span><span class="kt">int</span> <span class="n">dwFlags</span><span class="p">,</span> <span class="n">IntPtr</span> <span class="n">dwExtraInfo</span><span class="p">,</span> <span class="kt">int</span> <span class="n">mouseData</span> <span class="p">=</span> <span class="m">0</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">dwFlags</span> <span class="p">=</span> <span class="n">dwFlags</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">dwExtraInfo</span> <span class="p">=</span> <span class="n">dwExtraInfo</span><span class="p">;</span>
+    <span class="n">dx</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span>
+    <span class="n">dy</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span>
+    <span class="n">time</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">mouseData</span> <span class="p">=</span> <span class="n">mouseData</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// White\src\TestStack.White\WindowsAPI\InputFactory.cs</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">InputFactory</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="k">static</span> <span class="n">Input</span> <span class="nf">Mouse</span><span class="p">(</span><span class="n">MouseInput</span> <span class="n">mouseInput</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="n">Input</span><span class="p">.</span><span class="nf">MouseInput</span><span class="p">(</span><span class="n">WindowsConstants</span><span class="p">.</span><span class="n">INPUT_MOUSE</span><span class="p">,</span> <span class="n">mouseInput</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+
+<span class="c1">// White\src\TestStack.White\WindowsAPI\Input.cs</span>
+<span class="na">[StructLayout(LayoutKind.Explicit)]</span>
+<span class="k">public</span> <span class="k">struct</span> <span class="nc">Input</span>
+<span class="p">{</span>
+  <span class="p">[</span><span class="nf">FieldOffset</span><span class="p">(</span><span class="m">0</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="kt">int</span> <span class="n">type</span><span class="p">;</span>
+  <span class="p">[</span><span class="nf">FieldOffset</span><span class="p">(</span><span class="m">4</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="n">MouseInput</span> <span class="n">mi</span><span class="p">;</span>
+  <span class="p">[</span><span class="nf">FieldOffset</span><span class="p">(</span><span class="m">4</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="n">KeyboardInput</span> <span class="n">ki</span><span class="p">;</span>
+  <span class="p">[</span><span class="nf">FieldOffset</span><span class="p">(</span><span class="m">4</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">readonly</span> <span class="n">HardwardInput</span> <span class="n">hi</span><span class="p">;</span>
+  <span class="k">public</span> <span class="k">static</span> <span class="n">Input</span> <span class="nf">MouseInput</span><span class="p">(</span><span class="kt">int</span> <span class="n">type</span><span class="p">,</span> <span class="n">MouseInput</span> <span class="n">mouseInput</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="k">new</span> <span class="n">Input</span> <span class="p">{</span><span class="n">type</span> <span class="p">=</span> <span class="n">type</span><span class="p">,</span> <span class="n">mi</span> <span class="p">=</span> <span class="n">mouseInput</span><span class="p">};</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>因为white调用Windows原生的SendInput()方法来发送鼠标输入事件，所以需要
+为这个方法的参数进行必要的数据类型转换。</p>
+
+<p>从微软官方文档查看SendInput()方法声明如下：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">UINT</span> <span class="n">WINAPI</span> <span class="n">SendInput</span><span class="p">(</span>
+  <span class="n">UINT</span> <span class="n">nInputs</span><span class="p">,</span>
+  <span class="n">LPINPUT</span> <span class="n">pInputs</span><span class="p">,</span>
+  <span class="kt">int</span> <span class="n">cbSize</span>
+<span class="p">);</span>
+</code></pre></div></div>
+
+<p>SendInput()方法的第二个参数是INPUT结构，它的声明如下：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">typedef</span> <span class="k">struct</span> <span class="n">tagINPUT</span> <span class="p">{</span>
+  <span class="n">DWORD</span> <span class="n">type</span><span class="p">;</span>
+  <span class="k">union</span> <span class="p">{</span>
+    <span class="n">MOUSEINPUT</span> <span class="n">mi</span><span class="p">;</span>
+    <span class="n">KEYDINPUT</span> <span class="n">ki</span><span class="p">;</span>
+    <span class="n">HARDWARDINPUT</span> <span class="n">ki</span><span class="p">;</span>
+  <span class="p">};</span>
+<span class="p">}</span> <span class="n">INPUT</span><span class="p">,</span> <span class="o">*</span><span class="n">PINPUT</span><span class="p">;</span>
+
+<span class="k">typedef</span> <span class="k">struct</span> <span class="n">tagMOUSEINPUT</span> <span class="p">{</span>
+  <span class="n">LONG</span> <span class="n">dx</span><span class="p">;</span>
+  <span class="n">LONG</span> <span class="n">dy</span><span class="p">;</span>
+  <span class="n">DWORD</span> <span class="n">mouseData</span><span class="p">;</span>
+  <span class="n">DWORD</span> <span class="n">dwFlags</span><span class="p">;</span>
+  <span class="n">DWORD</span> <span class="n">time</span><span class="p">;</span>
+  <span class="n">ULONG_PTR</span> <span class="n">dwExtraInfo</span><span class="p">;</span>
+<span class="p">}</span> <span class="n">MOSUEINPUT</span><span class="p">,</span> <span class="o">*</span><span class="n">PMOUSEINPUT</span><span class="p">;</span>
+</code></pre></div></div>
+
+  </div>
+
+  
+
+  <a class="u-url" href="/white/2018/03/03/white.part6.html" hidden></a>
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">读源码</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">
+            
+              读源码
+            
+            </li>
+            
+            <li><a class="u-email" href="mailto:ryanfzyw@gmail.com">ryanfzyw@gmail.com</a></li>
+            
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-2">
+        <ul class="social-media-list">
+  
+  
+  
+  <li><a href="https://github.com/ryanfzy"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg> <span class="username">ryanfzy</span></a></li>
+  
+  
+  
+  
+  
+  
+  
+</ul>
+
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>这里是一个关于阅读源码的网站，这里有我在阅读源码过程中做的笔记，希望这些笔记能对读到它们的人有帮助。 </p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>
