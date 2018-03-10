@@ -1,4 +1,250 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.7.2">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2018-03-03T22:34:15+13:00</updated><id>http://localhost:4000/</id><title type="html">读源码</title><subtitle>这里是一个关于阅读源码的网站，这里有我在阅读源码过程中做的笔记，希望这些笔记能对读到它们的人有帮助。 </subtitle><entry><title type="html">读white源码（6）：Button</title><link href="http://localhost:4000/white/2018/03/03/white.part6.html" rel="alternate" type="text/html" title="读white源码（6）：Button" /><published>2018-03-03T00:00:00+13:00</published><updated>2018-03-03T00:00:00+13:00</updated><id>http://localhost:4000/white/2018/03/03/white.part6</id><content type="html" xml:base="http://localhost:4000/white/2018/03/03/white.part6.html">&lt;p&gt;我们可以用下面的代码启动要测试的应用，然后获取应用的窗口对象，接着鼠标
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.7.2">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2018-03-10T19:52:06+13:00</updated><id>http://localhost:4000/</id><title type="html">读源码</title><subtitle>这里是一个关于阅读源码的网站，这里有我在阅读源码过程中做的笔记，希望这些笔记能对读到它们的人有帮助。 </subtitle><entry><title type="html">读white源码（7）：TextBox</title><link href="http://localhost:4000/white/2018/03/10/white.part7.html" rel="alternate" type="text/html" title="读white源码（7）：TextBox" /><published>2018-03-10T00:00:00+13:00</published><updated>2018-03-10T00:00:00+13:00</updated><id>http://localhost:4000/white/2018/03/10/white.part7</id><content type="html" xml:base="http://localhost:4000/white/2018/03/10/white.part7.html">&lt;p&gt;我们可以用下面的代码启动要测试的应用，然后获取应用的窗口对象，接着在
+窗口的文本框里输入文字。&lt;/p&gt;
+
+&lt;div class=&quot;language-csharp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;exePath&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;...&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;ScreenRepository&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;repo&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;ScreenRepository&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Application&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;Launch&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;exePath&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;AppMainScreen&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;screen&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;repo&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AppMainScreen&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;title...&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;InitializeOption&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;NoCache&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;screen&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TestTextBox&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Text&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;testing note&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;下面我们看一个white如何对TestTextBox文本框输入文字的。&lt;/p&gt;
+
+&lt;div class=&quot;language-csharp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;// White\src\TestStack.White\UIItems\TextBox.cs&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;TextBox&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;UIItem&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IScrollable&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;protected&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;TextBox&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{}&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;TextBox&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AutomationElement&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;automationElement&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IActionListener&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;actionListener&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;base&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;automationElement&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;actionListener&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{}&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;virtual&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Text&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;set&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Enter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;value&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;// White\src\TestStack.White\UIItems\UIItem.cs&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;UIItem&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IUIItem&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;protected&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;readonly&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;AutomationElement&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;automationElement&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;internal&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;readonly&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Keyboard&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;keyboard&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Keyboard&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Instance&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;UIItem&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AutomationElement&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;automationElement&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IActionListener&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;actionListener&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;automationElement&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;automationElement&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;virtual&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Enter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;value&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pattern&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Pattern&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ValuePattern&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Pattern&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ValuePattern&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pattern&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;null&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pattern&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;SetValue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Empty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+    &lt;span class=&quot;nf&quot;&gt;EnterData&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;value&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;protected&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;virtual&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;EnterData&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;value&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;lines&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;value&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;Replace&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;\r\n&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;\n&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;Split&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;sc&quot;&gt;'\n'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;keyboard&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;Send&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;lines&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;],&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;actionListener&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;foreach&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;line&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;lines&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;Skip&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;keyboard&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;PressSpecialKey&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;KeyboardInput&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;SpecialKeys&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;RETURN&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;keyboard&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;Send&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;line&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;actionListener&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;protected&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;virtual&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;BasePattern&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Pattern&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AutomationPattern&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pattern&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Pattern&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AutomationElement&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pattern&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;internal&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;BasePattern&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Pattern&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AutomationElement&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;automationElement&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;AutomationPattern&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pattern&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;object&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;patternObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;automationElement&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;TryGetPattern&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pattern&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;out&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;patternObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;BasePattern&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;patternObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;null&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;TextBox类是UIItem类的子类，当对它的Text属性输入文字时，它会调用父类的
+Enter()方法进行文件的输入。&lt;/p&gt;
+
+&lt;p&gt;在Enter()方法中，UIItem会尝试在它封装的AutoamtionElement中获取ValuePattern
+对象。ValuePattern类在Windows UI Automation框架中扮演接口的角色。简单
+来说，在windows中，控件的类型多种多样，但它们实现的功能大概可以分为几个
+模式。其中一个模式是ValuePattern，实现这个模式的控件可以输入和输出文字。&lt;/p&gt;
+
+&lt;p&gt;在Windows UI Automation框架中，它不在乎控件具体的细节，它只需要知道
+这个控件实现了哪些模式，然后根据这些模式进行不同的操作。&lt;/p&gt;
+
+&lt;p&gt;回到Enter()方法中，white利用控件的ValuePattern接口将文本框清空。然后，
+可以看到，对文本框的输入是Keyboard类实现的。&lt;/p&gt;
+
+&lt;div class=&quot;language-csharp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;// White\src\TestStack.White\InputDevices\Keyboard.cs&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Keyboard&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Ikeyboard&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;DllImport&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;user32.dll&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)]&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;extern&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;short&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;VkKeyScan&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ch&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;readonly&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Keyboard&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Instance&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Keyboard&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Keyboard&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;virtual&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Send&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;keysToType&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IActionListener&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;actionListener&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;foreach&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;c&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;keysToType&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+      &lt;span class=&quot;kt&quot;&gt;short&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;key&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;VkKeyScan&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;c&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+      &lt;span class=&quot;nf&quot;&gt;Press&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Press&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;short&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;specialKey&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;nf&quot;&gt;SendKeyDown&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;specialKey&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;nf&quot;&gt;SendKeyUp&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;specialKey&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Keyboard类利用Windows的原生API，逐字为用户传入的字符串模拟键盘按键的
+下压和松开的动作。&lt;/p&gt;
+
+&lt;div class=&quot;language-csharp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;// White\src\TestStack.White\InputDevices\Keyboard.cs&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Keyboard&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Ikeyboard&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;DllImport&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;user32&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;EntryPoint&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;SendInput&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)]&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;extern&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;SendInput&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;uint&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;numberOfInputs&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;ref&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Input&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;input&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;structSize&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;DllImport&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;user32&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;EntryPoint&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;SendInput&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)]&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;extern&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;SendInput64&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;numberOfInputs&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;ref&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Input64&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;input&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;structSize&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;DllImport&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;user32.dll&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)]&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;extern&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IntPtr&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;GetMessageExtraInfo&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;SendKeyDown&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;short&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;b&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;specialKey&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;KeyboardInput&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;KeyUpDown&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;keyUpDown&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;GetSpecialKeyCode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;specialKey&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;KeyboardInput&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;KeyUpDown&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;KEYEVENTF_KEYDOWN&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;nf&quot;&gt;SendInput&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;GetInputFor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;b&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;keyUpDown&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;SendKeyUp&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;short&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;b&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;specialKey&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;KeyboardInput&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;KeyUpDown&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;keyUpDown&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;GetSpecialKeyCode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;specialKey&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;KeyboardInput&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;KeyUpDown&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;KEYEVENTF_KEYUP&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;nf&quot;&gt;SendInnput&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;GetInputFor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;b&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;keyUpDown&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;KeyboardInput&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;KeyUpDown&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;GetSpecialKeyCode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;specialKey&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;KeyboardInput&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;KeyUpDown&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Input&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;GetInputFor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;short&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;character&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;KeyboardInput&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;KeyUpDown&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;keyUpOrDown&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;InputFactory&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;Keyboard&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;KeyboardInput&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;character&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;keyUpOrDown&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;GetMessageExtraInfo&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()));&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;SendInput&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Input&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;input&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IntPtr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Size&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;4&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+      &lt;span class=&quot;nf&quot;&gt;SendInput&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;ref&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;input&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Marshal&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;SizeOf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;typeof&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Input&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)));&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+      &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;input64&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Input64&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;input&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+      &lt;span class=&quot;nf&quot;&gt;SendInput64&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;ref&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;input64&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Marshal&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;SizeOf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;typeof&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Input&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)));&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;键盘输入的行为是通过调用user32.dll中的相应方法模拟出来，Keyboard类先
+发送某个按键的下压消息，然后再发送这个按钮的松开消息。&lt;/p&gt;
+
+&lt;div class=&quot;language-csharp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;// White\src\TestStack.White\WindowsAPI\WindowPlacement.cs&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;[StructLayout(LayoutKind.Sequential)]&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;KeyboardInput&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;readonly&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;short&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;wVk&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;readonly&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;short&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;wScan&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;readonly&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;KeyUpDown&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;dwFlags&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;readonly&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;time&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;readonly&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IntPtr&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;dwExtraInfo&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;KeyboardInput&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;short&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;wVk&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;KeyUpDown&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;dwFlags&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IntPtr&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;dwExtraInfo&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;wVk&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;wVk&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;wScan&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dwFlags&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;dwFlags&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;time&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dwExtraInfo&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;dwExtraInfo&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;// White\src\TestStack.White\WindowsAPI\InputFactory.cs&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;InputFactory&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Input&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Keyboard&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;KeyboardInput&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;keyboardInput&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Input&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;KeyboardInput&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;WindowsConstants&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;INPUT_KEYBOARD&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;keyboardInput&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;// White\src\TestStack.White\WindowsAPI\Input.cs&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;[StructLayout(LayoutKind.Explicit)]&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Input&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;FieldOffset&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)]&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;FieldOffset&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;4&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)]&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MouseInput&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mi&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;FieldOffset&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;4&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)]&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;KeyboardInput&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ki&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;FieldOffset&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;4&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)]&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;readonly&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;HardwardInput&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;hi&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Input&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;KeyboardInput&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;KeyboardInput&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;keyboardInput&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Input&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;type&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ki&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;keyboardInput&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;因为white调用Windows原生的SendInput()方法来发送键盘输入事件，所以需要
+为这个方法的参数进行必要的数据类型转换。&lt;/p&gt;
+
+&lt;p&gt;从微软官方文档查看SendInput()方法声明如下：&lt;/p&gt;
+
+&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;UINT&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;WINAPI&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;SendInput&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;UINT&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;nInputs&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;LPINPUT&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pInputs&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cbSize&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;SendInput()方法的第二个参数是INPUT结构，它的声明如下：&lt;/p&gt;
+
+&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;typedef&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;tagINPUT&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;DWORD&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;union&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;MOUSEINPUT&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mi&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;KEYDINPUT&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ki&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;HARDWARDINPUT&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ki&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;INPUT&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PINPUT&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;typedef&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;tagKEYBDINPUT&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;WORD&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;wVk&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;WORD&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;wScan&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;DWORD&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;dwFlags&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;DWORD&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;time&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;ULONG_PTR&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;dwExtraInfo&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;KEYBDINPUT&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PKEYBDINPUT&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</content><author><name></name></author><summary type="html">我们可以用下面的代码启动要测试的应用，然后获取应用的窗口对象，接着在 窗口的文本框里输入文字。</summary></entry><entry><title type="html">读white源码（6）：Button</title><link href="http://localhost:4000/white/2018/03/03/white.part6.html" rel="alternate" type="text/html" title="读white源码（6）：Button" /><published>2018-03-03T00:00:00+13:00</published><updated>2018-03-03T00:00:00+13:00</updated><id>http://localhost:4000/white/2018/03/03/white.part6</id><content type="html" xml:base="http://localhost:4000/white/2018/03/03/white.part6.html">&lt;p&gt;我们可以用下面的代码启动要测试的应用，然后获取应用的窗口对象，接着鼠标
 单击窗口上TestButton按钮。&lt;/p&gt;
 
 &lt;div class=&quot;language-csharp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;exePath&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;...&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
@@ -2140,170 +2386,4 @@ setter，那构建依赖链的逻辑就会不同，最后被注入的代码也�
 
 &lt;p&gt;这里不展示如何根据类属性的DependsOnAttribute特征，将该特征指向的被依赖
 的属性添加到该类的属性依赖链中。如果感兴趣，请参见文件
-PropertyChanged\PropertyChanged.Fody\DependsOnDataAttributeReader.cs。&lt;/p&gt;</content><author><name></name></author><summary type="html">假设有如下类，</summary></entry><entry><title type="html">读fody.PropertyChanged源码（5）：Mapping数组</title><link href="http://localhost:4000/fody.propertychanged/2018/02/11/fody.PropertyChanged.part5.html" rel="alternate" type="text/html" title="读fody.PropertyChanged源码（5）：Mapping数组" /><published>2018-02-11T00:00:00+13:00</published><updated>2018-02-11T00:00:00+13:00</updated><id>http://localhost:4000/fody.propertychanged/2018/02/11/fody.PropertyChanged.part5</id><content type="html" xml:base="http://localhost:4000/fody.propertychanged/2018/02/11/fody.PropertyChanged.part5.html">&lt;p&gt;先看一个例子：&lt;/p&gt;
-
-&lt;div class=&quot;language-csharp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;DemoCustomer&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Name&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;set&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-
-  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_phone&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Phone&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;get&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_phone&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;set&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_phone&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;value&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-
-  &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_customerAddress&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Address&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;get&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_customerAddress&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;set&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_customerAddress&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;value&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;这里展示的是，在一个类中，一个属性通常对应着一个字段，即使我们没显式的
-为一个属性声明一个字段（例如，Name属性），编译器也会为它隐式地创建
-一个字段。&lt;/p&gt;
-
-&lt;p&gt;这里，fody.PropertyChanged需要为一个类的所有属性找到其对应的字段，然后
-记录这些对应关系。&lt;/p&gt;
-
-&lt;div class=&quot;language-csharp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;// PropertyChanged\PropertyChanged.Fody\MappingFinder.cs&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;FindMappings&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;nf&quot;&gt;FindMappings&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;NotifyNodes&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-
-&lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;FindMappings&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TypeNode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;notifyNodes&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;foreach&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;node&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;notifyNodes&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;typeDefinition&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;node&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TypeDefinition&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;node&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Mappings&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;GetMappings&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;typeDefinition&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;ToList&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-    &lt;span class=&quot;nf&quot;&gt;FindMappings&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;node&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Nodes&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-
-&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IEnumerable&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;MemberMapping&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;GetMappings&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TypeDefinition&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;typeDefinition&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;foreach&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;property&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;typeDefinition&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Properties&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fieldDefinition&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;TryGetField&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;typeDefinition&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;property&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;yield&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MemberMapping&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-      &lt;span class=&quot;n&quot;&gt;PropertyDefinition&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;property&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-      &lt;span class=&quot;n&quot;&gt;FieldDefinition&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fieldDefinition&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;从这里可以看出，fody.PropertyChanged使用MemberMapping类型记录一个类中
-的属性与它的字段的对应关系。&lt;/p&gt;
-
-&lt;div class=&quot;language-csharp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;// PropertyChanged\PropertyChanged.Fody\MemberMapping.cs&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;MemberMapping&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PropertyDefinition&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PropertyDefinition&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FieldDefinition&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FieldDefinition&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;这个类型的结构很简单，PropertyDefinition字段代表类的属性，FieldDefinition
-字段代表类的字段。&lt;/p&gt;
-
-&lt;div class=&quot;language-csharp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;// PropertyChanged\PropertyChanged.Fody\MemberMapping.cs&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FieldDefinition&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;TryGetField&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TypeDefinition&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;typeDefinition&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PropertyDefinition&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;property&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;propertyName&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;property&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-  &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fieldsWithSameType&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;typeDefinition&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Fields&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;Where&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;DeclaringType&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;typeDefinition&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;ToList&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;foreach&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;field&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fieldsWithSameType&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;field&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Name&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;$&quot;&amp;lt;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;propertyName&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;gt;k_BackingField&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-      &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;field&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;foreach&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;field&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fieldsWithSameType&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;upperPropertyName&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;propertyName&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;ToUpper&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fieldUpper&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;field&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;ToUpper&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;fieldUpper&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;upperPropertyName&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-      &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;field&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;fieldUpper&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;_&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;upperPropertyName&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-      &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;field&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;GetSingleField&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;property&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;fody.PropertyChanged会先通过名字找到某个属性对应的字段。它假设字段的
-名字和属性名字可能是一样的，或类似的（字段的名字开头是_），或它是编译器
-为没有显式声明字段的属性隐式生成的。&lt;/p&gt;
-
-&lt;p&gt;如果找到了，TryGetField()方法返回该字段的引用，如果找不到，就说明该属性
-和它对应的字段的命名不同，必须使用另一种方式去找到该字段。&lt;/p&gt;
-
-&lt;div class=&quot;language-csharp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;// PropertyChanged\PropertyChanged.Fody\MemberMapping.cs&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FieldDefinition&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;GetSingleField&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PropertyDefinition&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;property&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fieldDefinition&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;GetSingleField&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;property&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Code&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Stfld&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;property&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;SetMethod&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;fieldDefinition&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;null&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fieldDefinition&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;GetSingleField&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;property&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Code&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Ldfld&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;property&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;GetMethod&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-
-&lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FieldDefinition&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;GetSingleField&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PropertyDefinition&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;property&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Code&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;code&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MethodDefinition&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;methodDefinition&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
-  &lt;span class=&quot;n&quot;&gt;FieldReference&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fieldReference&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;null&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;foreach&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;instruction&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;methodDefinition&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Body&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Instructions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;instruction&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;OpCode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Code&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;code&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-      &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;fieldReference&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;null&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-      &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;null&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-      &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-      &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;field&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;instruction&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Operand&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FieldReference&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-      &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;field&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;null&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-      &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;continue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-      &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-      &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;field&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;DeclaringType&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;property&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;DeclaringType&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-      &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;continue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-      &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-      &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;field&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FieldType&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;property&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PropertyType&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-      &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;continue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-      &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-      &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fieldDef&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;instruction&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Operand&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FieldDefinition&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-      &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fieldAttributes&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fieldDef&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;?.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Attributes&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;&amp;amp;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FieldAttributes&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;InitOnly&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-      &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;fieldAttributes&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FieldAttributes&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;InitOnly&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-      &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;k&quot;&gt;continue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-      &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-      &lt;span class=&quot;n&quot;&gt;fieldReference&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;field&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fieldReference&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;?.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;Resolve&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;上面的代码分别对传入属性的getter和setter中检查。在该属性的setter中，
-若找到某个stfld命令（保存到对象中的某个字段中）的参数的类型和该属性的
-类型相同时，便认为其参数是该属性对应的字段。&lt;/p&gt;
-
-&lt;p&gt;如果找不到，就检查该属性的getter，若从中找到某个ldfld命令（读取对象中的
-某个字段）的参数的类型和该属性的类型相同时，便认为其参数是该属性对应的字段。&lt;/p&gt;
-
-&lt;p&gt;现在回到FindMappings()方法中。当检查完当前的节点后，递归继续检查该节点
-的子节点。&lt;/p&gt;</content><author><name></name></author><summary type="html">先看一个例子：</summary></entry></feed>
+PropertyChanged\PropertyChanged.Fody\DependsOnDataAttributeReader.cs。&lt;/p&gt;</content><author><name></name></author><summary type="html">假设有如下类，</summary></entry></feed>
