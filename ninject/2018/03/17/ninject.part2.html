@@ -167,7 +167,14 @@
     <span class="p">...</span>
     <span class="kt">var</span> <span class="n">satisfiedBindings</span> <span class="p">=</span> <span class="k">this</span><span class="p">.</span><span class="nf">GetBindings</span><span class="p">(</span><span class="n">request</span><span class="p">.</span><span class="n">Service</span><span class="p">).</span><span class="nf">Where</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nf">SatisfiesRequest</span><span class="p">(</span><span class="n">request</span><span class="p">));</span>
     <span class="kt">var</span> <span class="n">satisfiedBindingsEnumerator</span> <span class="p">=</span> <span class="n">satisfiedBindings</span><span class="p">.</span><span class="nf">GetEnumerator</span><span class="p">();</span>
-    <span class="p">...</span>
+    <span class="k">if</span> <span class="p">(!</span><span class="n">satisfiedBindingEnumerator</span><span class="p">.</span><span class="nf">MoveNext</span><span class="p">())</span>
+    <span class="p">{</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">hanldeMissingBindings</span> <span class="p">&amp;&amp;</span> <span class="k">this</span><span class="p">.</span><span class="nf">HandleMissingBinding</span><span class="p">(</span><span class="n">request</span><span class="p">))</span>
+      <span class="p">{</span>
+        <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nf">Resolve</span><span class="p">(</span><span class="n">request</span><span class="p">));</span>
+      <span class="p">}</span>
+      <span class="p">...</span>
+    <span class="p">}</span>
     <span class="k">if</span> <span class="p">(</span><span class="n">request</span><span class="p">.</span><span class="n">IsUnique</span><span class="p">)</span>
     <span class="p">{</span>
       <span class="kt">var</span> <span class="n">selectedBindings</span> <span class="p">=</span> <span class="n">satisfiedBindingEnumerator</span><span class="p">.</span><span class="n">Current</span><span class="p">;</span>
@@ -207,13 +214,11 @@
 的例子中的情况下，在Resolve()方法中会触及的代码。</p>
 
 <p>Resolve()方法会先从根据传入的接口类，在之前在StandardKernel中绑定过的
-bindings中找到对应的实现类。</p>
+bindings中找到对应的实现类。这个搜索过程在GetBindings()方法中发生，注意
+这里使用的搜索方式，它使用IBindingResolver来完成搜索。</p>
 
-<p>这里搜索过程在GetBindings()方法中发生，注意这里使用它的搜索方式，这个
-方法使用了IBindingResolver来完成搜索。</p>
-
-<p>注意这个IBindingResolver是接口类，它实际指向StandardBindingResolver和
-OpenGenericBindingResolver两个类。这里不讨论它怎么获得这两个类的对象的。</p>
+<p>这个IBindingResolver虽然是接口类，它实际指向StandardBindingResolver和
+OpenGenericBindingResolver两个类。这里不讨论是怎么获得这两个类的对象的。</p>
 
 <div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Ninject\src\Ninject\Planning\Bindings\Resolvers\StandardBindingResolver.cs</span>
 <span class="k">public</span> <span class="k">class</span> <span class="nc">StandardBindingResolve</span> <span class="p">:</span> <span class="n">NinjectComponent</span><span class="p">,</span> <span class="n">IBindingResolver</span>
@@ -225,8 +230,79 @@ OpenGenericBindingResolver两个类。这里不讨论它怎么获得这两个类
 <span class="p">}</span>
 </code></pre></div></div>
 
+<p>实际上，在上面的例子中我们传入的是Samurai类，它在bindings数组中并不存在。
+这种情况下，当我们尝试获得从bindings数组会添加进这个类，它会为我们的类
+创建一个空的binding数组。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Ninject\src\Ninject\Infrastructure\Multimap.cs</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">Multimap</span><span class="p">&lt;</span><span class="n">TKey</span><span class="p">,</span> <span class="n">TValue</span><span class="p">&gt;</span> <span class="p">:</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">KeyValuePair</span><span class="p">&lt;</span><span class="n">TKey</span><span class="p">,</span> <span class="n">ICollection</span><span class="p">&lt;</span><span class="n">TValue</span><span class="p">&gt;&gt;&gt;</span>
+<span class="p">{</span>
+  <span class="k">private</span> <span class="k">readonly</span> <span class="n">Dictionary</span><span class="p">&lt;</span><span class="n">TKey</span><span class="p">,</span> <span class="n">ICollection</span><span class="p">&lt;</span><span class="n">TValues</span><span class="p">&gt;&gt;</span> <span class="n">items</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Dictionary</span><span class="p">&lt;</span><span class="n">TKey</span><span class="p">,</span> <span class="n">ICollection</span><span class="p">&lt;</span><span class="n">TValue</span><span class="p">&gt;&gt;();</span>
+  <span class="p">...</span>
+  <span class="k">public</span> <span class="n">ICollection</span><span class="p">&lt;</span><span class="n">TValue</span><span class="p">&gt;</span> <span class="k">this</span><span class="p">[</span><span class="n">TKey</span> <span class="n">key</span><span class="p">]</span>
+  <span class="p">{</span>
+    <span class="k">get</span>
+    <span class="p">{</span>
+      <span class="p">...</span>
+      <span class="k">if</span> <span class="p">(!</span><span class="k">this</span><span class="p">.</span><span class="n">items</span><span class="p">.</span><span class="nf">ContainsKey</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
+      <span class="p">{</span>
+        <span class="k">this</span><span class="p">.</span><span class="n">items</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">TValue</span><span class="p">&gt;();</span>
+      <span class="p">}</span>
+      <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="n">items</span><span class="p">[</span><span class="n">key</span><span class="p">];</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
 <p>这里不展示OpenGenericBindingResolver类的Resolve()方法，因为我们要获取的
-类不是泛型类，它只会返回空的数组，所以这里忽略。</p>
+类不是泛型类，它只会返回空的数组。</p>
+
+<p>现在需要注意一下Resolve()方法的代码运行顺序。因为Samurai类对应着空的
+binding，所以该方法会先调用HandleMissingBinding()方法解决这个问题，然后
+再递归调用自身。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Ninject\src\Ninject\KernelBase.cs</span>
+<span class="k">public</span> <span class="k">abstract</span> <span class="k">class</span> <span class="nc">KernelBase</span> <span class="p">:</span> <span class="n">BindingRoot</span><span class="p">,</span> <span class="n">IKernel</span>
+<span class="p">{</span>
+  <span class="k">protected</span> <span class="k">virtual</span> <span class="kt">bool</span> <span class="nf">HandleMissingBinding</span><span class="p">(</span><span class="n">IRequest</span> <span class="n">request</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="p">...</span>
+    <span class="kt">var</span> <span class="n">components</span> <span class="p">=</span> <span class="k">this</span><span class="p">.</span><span class="n">Components</span><span class="p">.</span><span class="n">GetAll</span><span class="p">&lt;</span><span class="n">IMissingBindingResolver</span><span class="p">&gt;();</span>
+    <span class="kt">var</span> <span class="n">bindings</span> <span class="p">=</span> <span class="n">components</span>
+      <span class="p">.</span><span class="nf">Select</span><span class="p">(</span><span class="n">c</span> <span class="p">=&gt;</span> <span class="n">c</span><span class="p">.</span><span class="nf">Resolve</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">bindings</span><span class="p">,</span> <span class="n">request</span><span class="p">).</span><span class="nf">ToList</span><span class="p">())</span>
+      <span class="p">.</span><span class="nf">FirstOrDefault</span><span class="p">(</span><span class="n">b</span> <span class="p">=&gt;</span> <span class="n">b</span><span class="p">.</span><span class="nf">Any</span><span class="p">());</span>
+    <span class="p">...</span>
+    <span class="n">bindings</span><span class="p">.</span><span class="n">Map</span><span class="p">&lt;</span><span class="n">binding</span> <span class="p">=&gt;</span> <span class="n">binding</span><span class="p">.</span><span class="n">IsImplicit</span> <span class="p">=</span> <span class="k">true</span><span class="p">);</span>
+    <span class="k">this</span><span class="p">.</span><span class="nf">AddBindings</span><span class="p">(</span><span class="n">bindings</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>同样地，这里我们只需要知道IMissingBindingResolver接口对应着DefaultValueBindingResolver
+对象和SelfBindingResolver对象，它们用来解析得到适合的binding对象，然后将它添加
+进bindings数组中。</p>
+
+<p>这里忽略DefaultValueBindingResolver，因为无法解析我们的类。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Ninject\src\Ninject\Planning\Bindings\Resolvers\SelfBindingResolver.cs</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">SelfBindingResolver</span> <span class="p">:</span> <span class="n">NinjectComponent</span><span class="p">,</span> <span class="n">IMissingBindingResolver</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">IBinding</span><span class="p">&gt;</span> <span class="nf">Resolve</span><span class="p">(</span><span class="n">Multimap</span><span class="p">&lt;</span><span class="n">Type</span><span class="p">,</span> <span class="n">IBinding</span><span class="p">&gt;</span> <span class="n">bindings</span><span class="p">,</span> <span class="n">IRequest</span> <span class="n">request</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="kt">var</span> <span class="n">service</span> <span class="p">=</span> <span class="n">request</span><span class="p">.</span><span class="n">Service</span><span class="p">;</span>
+    <span class="p">...</span>
+    <span class="k">return</span> <span class="k">new</span><span class="p">[]</span> <span class="p">{</span>
+      <span class="k">new</span> <span class="nf">Binding</span><span class="p">(</span><span class="n">service</span><span class="p">)</span>
+      <span class="p">{</span>
+        <span class="n">ProviderCallback</span> <span class="p">=</span> <span class="n">StandardProvider</span><span class="p">.</span><span class="nf">GetCreationCallback</span><span class="p">(</span><span class="n">service</span><span class="p">),</span>
+      <span class="p">}</span>
+    <span class="p">};</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div></div>
 
 <p>找到对应的Binding对象后，Resolve()方法会创建一个Context对象解析要返回
 给用户的对象。</p>
@@ -234,24 +310,17 @@ OpenGenericBindingResolver两个类。这里不讨论它怎么获得这两个类
 <div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Ninject\src\Ninject\Activation\Context.cs</span>
 <span class="k">public</span> <span class="k">class</span> <span class="nc">Context</span> <span class="p">:</span> <span class="n">IContext</span>
 <span class="p">{</span>
-  <span class="k">private</span> <span class="kt">object</span> <span class="n">cachedScope</span><span class="p">;</span>
-  <span class="k">public</span> <span class="n">IRequest</span> <span class="n">Request</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
   <span class="k">public</span> <span class="n">IBinding</span> <span class="n">Binding</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
   <span class="p">...</span>
   <span class="k">public</span> <span class="nf">Context</span><span class="p">(</span><span class="n">IKernel</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">IRequest</span> <span class="n">request</span><span class="p">,</span> <span class="n">IBinding</span> <span class="n">binding</span><span class="p">,</span> <span class="n">ICache</span> <span class="n">cache</span><span class="p">,</span> <span class="n">IPlanner</span> <span class="n">planner</span><span class="p">,</span> <span class="n">IPipeline</span> <span class="n">pipeline</span><span class="p">)</span>
   <span class="p">{</span>
-    <span class="k">this</span><span class="p">.</span><span class="n">Request</span> <span class="p">=</span> <span class="n">request</span><span class="p">;</span>
     <span class="k">this</span><span class="p">.</span><span class="n">Binding</span> <span class="p">=</span> <span class="n">binding</span><span class="p">;</span>
     <span class="p">...</span>
   <span class="p">}</span>
   <span class="k">public</span> <span class="kt">object</span> <span class="nf">Resolve</span><span class="p">()</span>
   <span class="p">{</span>
     <span class="p">...</span>
-    <span class="k">this</span><span class="p">.</span><span class="n">cachedScope</span> <span class="p">=</span> <span class="k">this</span><span class="p">.</span><span class="n">Request</span><span class="p">.</span><span class="nf">GetScope</span><span class="p">()</span> <span class="p">??</span> <span class="k">this</span><span class="p">.</span><span class="n">Binding</span><span class="p">.</span><span class="nf">GetScope</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
-    <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">cachedScope</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
-      <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nf">ResolveInternal</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">cachedScope</span><span class="p">);</span>
-    <span class="k">else</span>
-      <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nf">ResolveInternal</span><span class="p">(</span><span class="k">null</span><span class="p">);</span>
+    <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nf">ResolveInternal</span><span class="p">(</span><span class="k">null</span><span class="p">);</span>
     <span class="p">...</span>
   <span class="p">}</span>
   <span class="k">private</span> <span class="kt">object</span> <span class="nf">ResolveInternal</span><span class="p">(</span><span class="kt">object</span> <span class="n">scope</span><span class="p">)</span>
@@ -261,79 +330,9 @@ OpenGenericBindingResolver两个类。这里不讨论它怎么获得这两个类
     <span class="p">...</span>
     <span class="k">return</span> <span class="n">reference</span><span class="p">.</span><span class="n">Instance</span><span class="p">;</span>
   <span class="p">}</span>
-  <span class="k">public</span> <span class="kt">object</span> <span class="nf">GetScope</span><span class="p">()</span>
-  <span class="p">{</span>
-    <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="n">cachedScope</span> <span class="p">??</span> <span class="k">this</span><span class="p">.</span><span class="n">Request</span><span class="p">.</span><span class="nf">GetScope</span><span class="p">()</span> <span class="p">??</span> <span class="k">this</span><span class="p">.</span><span class="n">Binding</span><span class="p">.</span><span class="nf">GetScope</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
-  <span class="p">}</span>
   <span class="k">public</span> <span class="n">IProvider</span> <span class="nf">GetProvider</span><span class="p">()</span>
   <span class="p">{</span>
     <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="n">Binding</span><span class="p">.</span><span class="nf">GetProvider</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
-  <span class="p">}</span>
-  <span class="p">...</span>
-<span class="p">}</span>
-</code></pre></div></div>
-
-<p>要了解Context对象如何创建对象返回给用户的，需要回顾一下当我们绑定实现
-到接口后，ninject对BindingConfiguration对象的设置。</p>
-
-<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Ninject\src\Ninject\Planning\Bindings\BindingBuilder.cs</span>
-<span class="k">public</span> <span class="k">class</span> <span class="nc">BindingBuilder</span>
-<span class="p">{</span>
-  <span class="k">public</span> <span class="n">IBindingConfiguration</span> <span class="n">BindingConfiguration</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
-  <span class="k">public</span> <span class="n">IKernel</span> <span class="n">Kernel</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
-  <span class="p">...</span>
-  <span class="k">public</span> <span class="nf">BindingBuilder</span><span class="p">(</span><span class="n">IBindingBuilder</span> <span class="n">bindingConfiguration</span><span class="p">,</span> <span class="n">IKernel</span> <span class="n">kernel</span><span class="p">,</span> <span class="kt">string</span> <span class="n">serviceNames</span><span class="p">)</span>
-  <span class="p">{</span>
-    <span class="p">...</span>
-    <span class="k">this</span><span class="p">.</span><span class="n">BindingConfiguration</span> <span class="p">=</span> <span class="n">bindingConfiguration</span><span class="p">;</span>
-    <span class="k">this</span><span class="p">.</span><span class="n">Kernel</span> <span class="p">=</span> <span class="n">kernel</span><span class="p">;</span>
-    <span class="k">this</span><span class="p">.</span><span class="n">BindingConfiguration</span><span class="p">.</span><span class="n">ScopeCallback</span> <span class="p">=</span> <span class="n">kernel</span><span class="p">.</span><span class="n">Settings</span><span class="p">.</span><span class="n">DefaultScopeCallback</span><span class="p">;</span>
-    <span class="p">...</span>
-  <span class="p">}</span>
-  <span class="p">...</span>
-  <span class="k">protected</span> <span class="n">IBindingWhenInNamedWithOrOnSyntax</span><span class="p">&lt;</span><span class="n">TImplementation</span><span class="p">&gt;</span> <span class="n">InternalTo</span><span class="p">&lt;</span><span class="n">TImplementation</span><span class="p">&gt;()</span>
-  <span class="p">{</span>
-    <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="n">InternalTo</span><span class="p">&lt;</span><span class="n">TImplementation</span><span class="p">&gt;(</span><span class="k">typeof</span><span class="p">(</span><span class="n">TImplementation</span><span class="p">));</span>
-  <span class="p">}</span>
-  <span class="k">protected</span> <span class="n">IBindingWhenInNamedWithOrOnSyntax</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">InternalTo</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="n">Type</span> <span class="n">implementation</span><span class="p">)</span>
-  <span class="p">{</span>
-    <span class="k">this</span><span class="p">.</span><span class="n">BindingConfiguration</span><span class="p">.</span><span class="n">ProviderCallback</span> <span class="p">=</span> <span class="n">StandardProvider</span><span class="p">.</span><span class="nf">GetCreationCallback</span><span class="p">(</span><span class="n">implementation</span><span class="p">);</span>
-    <span class="k">this</span><span class="p">.</span><span class="n">BidningConfiguration</span><span class="p">.</span><span class="n">Target</span> <span class="p">=</span> <span class="n">BindingTarget</span><span class="p">.</span><span class="n">Type</span><span class="p">;</span>
-    <span class="k">return</span> <span class="k">new</span> <span class="n">BindingConfigurationBuilder</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="k">this</span><span class="p">.</span><span class="n">BindingConfiguration</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="n">ServiceNames</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="n">Kernel</span><span class="p">);</span>
-  <span class="p">}</span>
-  <span class="p">...</span>
-<span class="p">}</span>
-</code></pre></div></div>
-
-<p>从这里可以看出，Context对象的GetScope()方法实际上调用的是DefaultScopeCallback，
-同样地，GetProvider()方法会调用StandardProvider.GetCreationCallback()返回
-的回调函数。</p>
-
-<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Ninject\src\Ninject\NinjectSettings.cs</span>
-<span class="k">public</span> <span class="k">class</span> <span class="nc">NinjectSettings</span> <span class="p">:</span> <span class="n">INinjectSettings</span>
-<span class="p">{</span>
-  <span class="k">public</span> <span class="n">Func</span><span class="p">&lt;</span><span class="n">IContext</span><span class="p">,</span> <span class="kt">object</span><span class="p">&gt;</span> <span class="n">DefaultScopeCallback</span>
-  <span class="p">{</span>
-    <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nf">Get</span><span class="p">(</span><span class="s">"DefaultScopeCallback"</span><span class="p">,</span> <span class="n">StandardScopeCallbacks</span><span class="p">.</span><span class="n">Transient</span><span class="p">);</span> <span class="p">}</span>
-    <span class="p">...</span>
-  <span class="p">}</span>
-  <span class="p">...</span>
-<span class="p">}</span>
-
-<span class="c1">// Ninject\src\Ninject\Infrastructure\StandardScopeCallbacks.cs</span>
-<span class="k">public</span> <span class="k">class</span> <span class="nc">StandardScopeCallbacks</span>
-<span class="p">{</span>
-  <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">Func</span><span class="p">&lt;</span><span class="n">IContext</span><span class="p">,</span> <span class="kt">object</span><span class="p">&gt;</span> <span class="n">Transient</span> <span class="p">=</span> <span class="n">ctx</span> <span class="p">=&gt;</span> <span class="k">null</span><span class="p">;</span>
-  <span class="p">...</span>
-<span class="p">}</span>
-
-<span class="c1">// Ninject\src\Ninject\Activation\Providers\StandardProvider.cs</span>
-<span class="k">public</span> <span class="k">class</span> <span class="nc">StandardProvider</span> <span class="p">:</span> <span class="n">IProvider</span>
-<span class="p">{</span>
-  <span class="k">public</span> <span class="k">static</span> <span class="n">Func</span><span class="p">&lt;</span><span class="n">IContext</span><span class="p">,</span> <span class="n">IProvider</span><span class="p">&gt;</span> <span class="nf">GetCreationCallback</span><span class="p">(</span><span class="n">Type</span> <span class="n">prototype</span><span class="p">)</span>
-  <span class="p">{</span>
-    <span class="p">...</span>
-    <span class="k">return</span> <span class="n">ctx</span> <span class="p">=&gt;</span> <span class="k">new</span> <span class="nf">StandardProvider</span><span class="p">(</span><span class="n">prototype</span><span class="p">,</span> <span class="n">ctx</span><span class="p">.</span><span class="n">Kernel</span><span class="p">.</span><span class="n">Components</span><span class="p">.</span><span class="n">Get</span><span class="p">&lt;</span><span class="n">IPlanner</span><span class="p">&gt;(),</span> <span class="n">ctx</span><span class="p">.</span><span class="n">Kernel</span><span class="p">.</span><span class="n">Components</span><span class="p">.</span><span class="n">Get</span><span class="p">&lt;</span><span class="n">ISelector</span><span class="p">&gt;().</span><span class="n">ConstructorScorer</span><span class="p">);</span>
   <span class="p">}</span>
   <span class="p">...</span>
 <span class="p">}</span>
