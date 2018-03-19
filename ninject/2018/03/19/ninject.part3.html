@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Begin Jekyll SEO tag v2.4.0 -->
+<title>读ninject源码（3）：创建类对象 | 读源码</title>
+<meta name="generator" content="Jekyll v3.7.2" />
+<meta property="og:title" content="读ninject源码（3）：创建类对象" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Ninject是一个实现依赖注入的工具。我们可以它将一个实现捆绑到一个接口上。" />
+<meta property="og:description" content="Ninject是一个实现依赖注入的工具。我们可以它将一个实现捆绑到一个接口上。" />
+<link rel="canonical" href="http://localhost:4000/ninject/2018/03/19/ninject.part3.html" />
+<meta property="og:url" content="http://localhost:4000/ninject/2018/03/19/ninject.part3.html" />
+<meta property="og:site_name" content="读源码" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2018-03-19T00:00:00+13:00" />
+<script type="application/ld+json">
+{"description":"Ninject是一个实现依赖注入的工具。我们可以它将一个实现捆绑到一个接口上。","@type":"BlogPosting","url":"http://localhost:4000/ninject/2018/03/19/ninject.part3.html","headline":"读ninject源码（3）：创建类对象","dateModified":"2018-03-19T00:00:00+13:00","datePublished":"2018-03-19T00:00:00+13:00","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/ninject/2018/03/19/ninject.part3.html"},"@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+  <link rel="stylesheet" href="/assets/main.css">
+  <link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="读源码" />
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" rel="author" href="/">读源码</a>
+
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+            <a class="page-link" href="/about/">About</a>
+            
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">读ninject源码（3）：创建类对象</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2018-03-19T00:00:00+13:00" itemprop="datePublished">
+        
+        Mar 19, 2018
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>Ninject是一个实现依赖注入的工具。我们可以它将一个实现捆绑到一个接口上。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">IKernel</span> <span class="n">kernel</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">StandardKernel</span><span class="p">();</span>
+<span class="n">kernel</span><span class="p">.</span><span class="n">Bind</span><span class="p">&lt;</span><span class="n">IWeapon</span><span class="p">&gt;().</span><span class="n">To</span><span class="p">&lt;</span><span class="n">Sword</span><span class="p">&gt;();</span>
+<span class="kt">var</span> <span class="n">samurai</span> <span class="p">=</span> <span class="n">kernel</span><span class="p">.</span><span class="n">Get</span><span class="p">&lt;</span><span class="n">Samurai</span><span class="p">&gt;();</span>
+</code></pre></div></div>
+
+<p>Samurai类声明如下：</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">class</span> <span class="nc">Samurai</span>
+<span class="p">{</span>
+  <span class="k">private</span> <span class="n">IWeapon</span> <span class="n">weapon</span><span class="p">;</span>
+  <span class="k">public</span> <span class="nf">Samurai</span><span class="p">(</span><span class="n">IWeapon</span> <span class="n">weapon</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">weapon</span> <span class="p">=</span> <span class="n">weapon</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>当使用ninject获取一个Samurai对象时，因为该类的构造函数依赖IWeapon接口，
+为了顺利的创建这个对象，ninject需要在调用它的构造函数时传入实现了
+IWeapon接口的实现类的对象。</p>
+
+<p>下面我们看一些ninject创建Samurai对象时的具体细节。</p>
+
+<p>当我们调用Get()方法时，ninject会创建一个Context对象，然后使用该对象来创建
+我们的对象。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Ninject\src\Ninject\Activation\Context.cs</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">Context</span> <span class="p">:</span> <span class="n">IContext</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="n">IRequest</span> <span class="n">Request</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="k">public</span> <span class="n">IBinding</span> <span class="n">Binding</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">...</span>
+  <span class="k">public</span> <span class="nf">Context</span><span class="p">(</span><span class="n">Kernel</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">IRequest</span> <span class="n">request</span><span class="p">,</span> <span class="n">IBinding</span> <span class="n">binding</span><span class="p">,</span> <span class="n">ICache</span> <span class="n">cache</span><span class="p">,</span> <span class="n">IPlanner</span> <span class="n">planner</span><span class="p">,</span> <span class="n">IPipeline</span> <span class="n">pipeline</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">Request</span> <span class="p">=</span> <span class="n">request</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">Binding</span> <span class="p">=</span> <span class="n">binding</span><span class="p">;</span>
+    <span class="p">...</span>
+  <span class="p">}</span>
+  <span class="k">private</span> <span class="kt">object</span> <span class="nf">ResolveInternal</span><span class="p">(</span><span class="kt">object</span> <span class="n">scope</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="p">...</span>
+    <span class="kt">var</span> <span class="n">reference</span> <span class="p">=</span> <span class="k">new</span> <span class="n">InstanceReference</span> <span class="p">{</span> <span class="n">Instance</span> <span class="p">=</span> <span class="k">this</span><span class="p">.</span><span class="nf">GetProvider</span><span class="p">().</span><span class="nf">Create</span><span class="p">(</span><span class="k">this</span><span class="p">)</span> <span class="p">};</span>
+    <span class="p">...</span>
+    <span class="k">return</span> <span class="n">reference</span><span class="p">.</span><span class="n">Instance</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">public</span> <span class="n">IProvider</span> <span class="nf">GetProvider</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="n">Binding</span><span class="p">.</span><span class="nf">GetProvider</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+
+<span class="c1">// Ninject\src\Ninject\Planning\Bindings\Binding.cs</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">Binding</span> <span class="p">:</span> <span class="n">IBinding</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="n">Type</span> <span class="n">Service</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="k">public</span> <span class="n">IBindingConfiguration</span> <span class="n">BindingConfiguration</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">...</span>
+  <span class="k">public</span> <span class="nf">Binding</span><span class="p">(</span><span class="n">Type</span> <span class="n">service</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="p">...</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">Service</span> <span class="p">=</span> <span class="n">service</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">BindingConfiguration</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BindingConfiguration</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="k">public</span> <span class="n">IProvider</span> <span class="nf">GetProvider</span><span class="p">(</span><span class="n">IContext</span> <span class="n">context</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="n">BindingConfiguration</span><span class="p">.</span><span class="nf">GetProvider</span><span class="p">(</span><span class="n">context</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+
+<span class="c1">// Ninject\src\Ninject\Planning\Bindings\BindingConfiguration.cs</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">BindingConfiguration</span> <span class="p">:</span> <span class="n">IBindingConfiguration</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="n">IProvider</span> <span class="nf">GetProvider</span><span class="p">(</span><span class="n">IContext</span> <span class="n">context</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="p">...</span>
+    <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nf">ProviderCallback</span><span class="p">(</span><span class="n">context</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Context对象从Binding对象中获取一个Provider对象，然后调用它的Create()
+方法创建一个对象返回给用户。</p>
+
+<p>之前我们看到过，这个ProviderCallback回调函数是从StandardProvider类的
+GetCreationCallback()方法返回的。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Ninject\src\Ninject\Activation\Providers\StandardProvider.cs</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">StandardProvider</span> <span class="p">:</span> <span class="n">IProvider</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="k">static</span> <span class="n">Func</span><span class="p">&lt;</span><span class="n">IContext</span><span class="p">,</span> <span class="n">IProvider</span><span class="p">&gt;</span> <span class="nf">GetCreationCallback</span><span class="p">(</span><span class="n">Type</span> <span class="n">prototype</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="p">...</span>
+    <span class="k">return</span> <span class="n">ctx</span> <span class="p">=&gt;</span> <span class="k">new</span> <span class="nf">StandardProvider</span><span class="p">(</span><span class="n">prototype</span><span class="p">,</span> <span class="n">ctx</span><span class="p">.</span><span class="n">Kernel</span><span class="p">.</span><span class="n">Components</span><span class="p">.</span><span class="n">Get</span><span class="p">&lt;</span><span class="n">IPlanner</span><span class="p">&gt;(),</span> <span class="n">ctx</span><span class="p">.</span><span class="n">Kernel</span><span class="p">.</span><span class="n">Components</span><span class="p">.</span><span class="n">Get</span><span class="p">&lt;</span><span class="n">ISelector</span><span class="p">&gt;().</span><span class="n">ConstructorScorer</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>GetCreationCallback()方法是StandardProvider类的静态方法，它会创建和返回
+一个新的StandardProvider对象。这个对象是真正创建用户指定的对象的。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Ninject\src\Ninject\Activation\Providers\StandardProvider.cs</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">StandardProvider</span> <span class="p">:</span> <span class="n">IProvider</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="n">IPlanner</span> <span class="n">Planner</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">...</span>
+  <span class="k">public</span> <span class="nf">StandardProvider</span><span class="p">(</span><span class="n">Type</span> <span class="n">type</span><span class="p">,</span> <span class="n">IPlanner</span> <span class="n">planner</span><span class="p">,</span> <span class="n">IConstructorScorer</span> <span class="n">constructorScorer</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">Planner</span> <span class="p">=</span> <span class="n">planner</span><span class="p">;</span>
+    <span class="p">...</span>
+  <span class="p">}</span>
+  <span class="k">public</span> <span class="k">virtual</span> <span class="kt">object</span> <span class="nf">Create</span><span class="p">(</span><span class="n">IContext</span> <span class="n">context</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="p">...</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">context</span><span class="p">.</span><span class="n">Plan</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">context</span><span class="p">.</span><span class="n">Plan</span> <span class="p">=</span> <span class="k">this</span><span class="p">.</span><span class="n">Planner</span><span class="p">.</span><span class="nf">GetPlan</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nf">ImplementationType</span><span class="p">(</span><span class="n">context</span><span class="p">.</span><span class="n">Request</span><span class="p">.</span><span class="n">Service</span><span class="p">));</span>
+    <span class="p">}</span>
+    <span class="kt">var</span> <span class="n">directive</span> <span class="p">=</span> <span class="k">this</span><span class="p">.</span><span class="nf">DetermineConstructorInjectionDirective</span><span class="p">(</span><span class="n">context</span><span class="p">);</span>
+    <span class="kt">var</span> <span class="n">arguments</span> <span class="p">=</span> <span class="n">directive</span><span class="p">.</span><span class="n">Targets</span><span class="p">.</span><span class="nf">Select</span><span class="p">(</span><span class="n">target</span> <span class="p">=&gt;</span> <span class="k">this</span><span class="p">.</span><span class="nf">GetValue</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">target</span><span class="p">)).</span><span class="nf">ToArray</span><span class="p">();</span>
+    <span class="p">...</span>
+    <span class="k">return</span> <span class="n">directive</span><span class="p">.</span><span class="nf">Injector</span><span class="p">(</span><span class="n">arguments</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>我们一步一步来看Create()方法。首先，在创建我们对象前，它先创建一个Plan。</p>
+
+<p>这里的IPlanner接口指向的是Planner类。这里不讨论它们之间是如何被关联起来的。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Ninject\src\Ninject\Planning\Planner.cs</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">Planner</span> <span class="p">:</span> <span class="n">NinjectComponent</span><span class="p">,</span> <span class="n">IPlanner</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="n">IList</span><span class="p">&lt;</span><span class="n">IPlanningStrategy</span><span class="p">&gt;</span> <span class="n">Strategies</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">...</span>
+  <span class="k">public</span> <span class="nf">Planner</span><span class="p">(</span><span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">IPlanningStrategy</span><span class="p">&gt;</span> <span class="n">strategies</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="p">...</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">Strategies</span> <span class="p">=</span> <span class="n">strategies</span><span class="p">.</span><span class="nf">ToList</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="k">public</span> <span class="n">IPlan</span> <span class="nf">GetPlan</span><span class="p">(</span><span class="n">Type</span> <span class="n">type</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="p">...</span>
+    <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nf">TryGetValue</span><span class="p">(</span><span class="n">type</span><span class="p">,</span> <span class="k">out</span> <span class="n">IPlan</span> <span class="n">plan</span><span class="p">)</span> <span class="p">?</span> <span class="n">plan</span> <span class="p">:</span> <span class="k">this</span><span class="p">.</span><span class="nf">CreateNewPlan</span><span class="p">(</span><span class="n">type</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">private</span> <span class="n">IPlan</span> <span class="nf">CreateNewPlan</span><span class="p">(</span><span class="n">Type</span> <span class="n">type</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="p">...</span>
+    <span class="n">plan</span> <span class="p">=</span> <span class="k">this</span><span class="p">.</span><span class="nf">CreateEmptyPlan</span><span class="p">(</span><span class="n">type</span><span class="p">);</span>
+    <span class="p">...</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">Strategies</span><span class="p">.</span><span class="nf">Map</span><span class="p">(</span><span class="n">s</span> <span class="p">=&gt;</span> <span class="n">s</span><span class="p">.</span><span class="nf">Execute</span><span class="p">(</span><span class="n">plan</span><span class="p">));</span>
+    <span class="k">return</span> <span class="n">plan</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">protected</span> <span class="k">virtual</span> <span class="n">IPlan</span> <span class="nf">CreateEmptyPlan</span><span class="p">(</span><span class="n">Type</span> <span class="n">type</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="p">...</span>
+    <span class="k">return</span> <span class="k">new</span> <span class="nf">Plan</span><span class="p">(</span><span class="n">type</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>创建Planner对象时传入了strategies数组包括ConstructorReflectionStrategy，
+PropertyReflectionStrategy和MethodReflectionStrategy对象。</p>
+
+<p>当Planner创建一个新的Plan分后，会分别调用Strategies数组中的每个对象的
+Execute()方法。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Ninject\src\Ninject\Planning\Strategies\ConstructorReflectionStrategy.cs</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">ConstructorReflectionStrategy</span> <span class="p">:</span> <span class="n">NinjectComponent</span><span class="p">,</span> <span class="n">IPlanningStrategy</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="n">ISelector</span> <span class="n">Selector</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="k">public</span> <span class="n">IInjectorFactory</span> <span class="n">InjectorFactory</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="k">public</span> <span class="nf">ConstructorReflectionStrategy</span><span class="p">(</span><span class="n">ISelector</span> <span class="n">selector</span><span class="p">,</span> <span class="n">IInjectorFactory</span> <span class="n">injectorFactory</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="p">...</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">Selector</span> <span class="p">=</span> <span class="n">selector</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">InjectorFactory</span> <span class="p">=</span> <span class="n">injectorFactory</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">public</span> <span class="k">void</span> <span class="nf">Execute</span><span class="p">(</span><span class="n">IPlan</span> <span class="n">plan</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="p">...</span>
+    <span class="kt">var</span> <span class="n">constructors</span> <span class="p">=</span> <span class="k">this</span><span class="p">.</span><span class="n">Selector</span><span class="p">.</span><span class="nf">SelectConstructorsForInjection</span><span class="p">(</span><span class="n">plan</span><span class="p">.</span><span class="n">Type</span><span class="p">);</span>
+    <span class="p">...</span>
+    <span class="k">foreach</span> <span class="p">(</span><span class="n">ConstructorInfo</span> <span class="n">constructor</span> <span class="k">in</span> <span class="n">constructors</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="p">...</span>
+      <span class="kt">var</span> <span class="n">directive</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">ConstructorInjectionDirective</span><span class="p">(</span><span class="n">constructor</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="n">InjectorFactor</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">constructor</span><span class="p">));</span>
+      <span class="p">...</span>
+      <span class="n">plan</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">directive</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>这里忽略PropertyReflectionStrategy和MethodReflectionStrategy类的代码，
+因为我们要获取的Samurai类不包括任何被InjectAttribute特征装饰的属性和
+方法。</p>
+
+<p>传入ConstructorReflectionStrategy的构造函数的ISelector接口指向的是Selector
+类，而InjectorFactory接口指向的是DynamicMethodInjectorFactory类。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Ninject\src\Ninject\Selection\Selector.cs</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">Selector</span> <span class="p">:</span> <span class="n">NinjectComponent</span><span class="p">,</span> <span class="n">ISelector</span>
+<span class="p">{</span>
+  <span class="k">private</span> <span class="k">const</span> <span class="n">BindingFlags</span> <span class="n">DefaultFlags</span> <span class="p">=</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">Public</span> <span class="p">|</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">Instance</span><span class="p">;</span>
+  <span class="k">protected</span> <span class="k">virtual</span> <span class="n">BindingFlags</span> <span class="n">Flags</span>
+  <span class="p">{</span>
+    <span class="k">get</span>
+    <span class="p">{</span>
+      <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="n">Settings</span><span class="p">.</span><span class="n">InjectNonPublic</span> <span class="p">?</span> <span class="p">(</span><span class="n">DefaultFlags</span> <span class="p">|</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">NonPublic</span><span class="p">)</span> <span class="p">:</span> <span class="n">DefaultFlags</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+  <span class="k">public</span> <span class="k">virtual</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">ConstructorInfo</span><span class="p">&gt;</span> <span class="nf">SelectConstructorsForInjection</span><span class="p">(</span><span class="n">Type</span> <span class="n">type</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="p">...</span>
+    <span class="kt">var</span> <span class="n">constructors</span> <span class="p">=</span> <span class="n">type</span><span class="p">.</span><span class="nf">GetConstructors</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">Flags</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">constructors</span><span class="p">.</span><span class="n">Length</span> <span class="p">==</span> <span class="m">0</span> <span class="p">?</span> <span class="k">null</span> <span class="p">:</span> <span class="n">constructors</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>ConstructorReflectionStrategy对象会为类的每个构造函数创建一个ConstructorInjectionDirective
+对象，然后将它们添加进Plan对象中。</p>
+
+<p>因为我们的类Samurai类只有一个构造函数，所以这里只会创建一个ConstructorInjectionDirective
+对象。注意，当创建这个对象时传入的第二个参数是InjectorFactor创建的一个
+动态方法，现在先不管它。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Ninject\src\Ninject\Activation\Providers\StandardProvider.cs</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">StandardProvider</span> <span class="p">:</span> <span class="n">IProvider</span>
+<span class="p">{</span>
+  <span class="k">private</span> <span class="n">ConstructorInjectionDirective</span> <span class="nf">DetermineConstructorInjectionDirective</span><span class="p">(</span><span class="n">IContext</span> <span class="n">context</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="kt">var</span> <span class="n">directives</span> <span class="p">=</span> <span class="n">context</span><span class="p">.</span><span class="n">Plan</span><span class="p">.</span><span class="n">ConstructorInjectionDirectives</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">directives</span><span class="p">.</span><span class="n">Count</span> <span class="p">==</span> <span class="m">1</span><span class="p">)</span>
+      <span class="k">return</span> <span class="n">directives</span><span class="p">[</span><span class="m">0</span><span class="p">];</span>
+    <span class="p">...</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>DetermineConstructorInjectionDirective()方法返回的就是之前在ConstructorReflectionStrategy
+中的Execute()方法中添加进Plan对象中的ConstructorInjectionDirective对象。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Ninject\src\Ninject\Planning\Directives\ConstructorInjectionDirective.cs</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">ConstructorInjectionDirective</span> <span class="p">:</span> <span class="n">MethodInjectionDirectiveBase</span><span class="p">&lt;</span><span class="n">ConstructorInfo</span><span class="p">,</span> <span class="n">ConstructorInjector</span><span class="p">&gt;</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="n">ConstructorInfo</span> <span class="n">ConstructorInfo</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">...</span>
+  <span class="k">public</span> <span class="nf">ConstructorInjectionDirective</span><span class="p">(</span><span class="n">ConstructorInfo</span> <span class="n">constructor</span><span class="p">,</span> <span class="n">ConstructorInjector</span> <span class="n">injector</span><span class="p">)</span>
+    <span class="p">:</span> <span class="k">base</span><span class="p">(</span><span class="n">constructor</span><span class="p">,</span> <span class="n">injector</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">Constructor</span> <span class="p">=</span> <span class="n">constructor</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// Ninject\src\Ninject\Planning\Directives\MethodInjectionDirectiveBase.cs</span>
+<span class="k">public</span> <span class="k">abstract</span> <span class="k">class</span> <span class="nc">MethodInjectionDirectiveBase</span><span class="p">&lt;</span><span class="n">TMethod</span><span class="p">,</span> <span class="n">TInjector</span><span class="p">&gt;</span> <span class="p">:</span> <span class="n">IDirective</span> <span class="k">where</span> <span class="n">TMethod</span> <span class="p">:</span> <span class="n">MethodBase</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="n">TInjector</span> <span class="n">Injector</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="k">public</span> <span class="n">ITarget</span><span class="p">[]</span> <span class="n">Targets</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="k">protected</span> <span class="nf">MethodInjectionDirectiveBase</span><span class="p">(</span><span class="n">TMethod</span> <span class="n">method</span><span class="p">,</span> <span class="n">TInjector</span> <span class="n">injector</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="p">...</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">Injector</span> <span class="p">=</span> <span class="n">injector</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">Targets</span> <span class="p">=</span> <span class="k">this</span><span class="p">.</span><span class="nf">CreateTargetsFromParameters</span><span class="p">(</span><span class="n">method</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">protected</span> <span class="k">virtual</span> <span class="n">ITarget</span><span class="p">[]</span> <span class="nf">CreateTargetsFromParameters</span><span class="p">(</span><span class="n">TMethod</span> <span class="n">method</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="n">method</span><span class="p">.</span><span class="nf">GetParameters</span><span class="p">().</span><span class="nf">Selector</span><span class="p">(</span><span class="n">parameter</span> <span class="p">=&gt;</span> <span class="k">new</span> <span class="nf">ParameterTarget</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">parameter</span><span class="p">)).</span><span class="nf">ToArray</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>在创建ConstructorInjectionDirective对象的同时，为构造函数的每个参数创建
+一个ParameterTarget对象。对于我们的Samurai类，它的构造函数只有一个参数
+IWeapon，所以对应的ConstructorInjectionDirective对象的Targets数组中
+只有一个对象。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Ninject\src\Ninject\Activation\Providers\StandardProvider.cs</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">StandardProvider</span> <span class="p">:</span> <span class="n">IProvider</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="kt">object</span> <span class="nf">GetValue</span><span class="p">(</span><span class="n">IContext</span> <span class="n">context</span><span class="p">,</span> <span class="n">ITarget</span> <span class="n">target</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="p">...</span>
+    <span class="k">return</span> <span class="n">target</span><span class="p">.</span><span class="nf">ResolveWithin</span><span class="p">(</span><span class="n">context</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>这里忽略了一些无关的代码，但这里很重要的一点是关于文章开头提到过的。
+当ninject为我们创建指定的类的对象时，如果这个对象的依赖其他的对象，即
+该类的构造函数需要传入参数。ninject在创建我们的对象前，它必须解析获取
+它需要的参数对象，然后传入这些参数才能创建我们的对象。</p>
+
+<p>对于我们例子来说，当ninject创建Samurai对象时，它需要传入一个实现了
+IWeapon接口的对象，而这个对象就是绑定的Sword对象。所以ninject在创建Samurai
+对象前，需要创建一个Sword对象，然后传入到Samurai的构造函数中。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Ninject\src\Ninject\Planning\Targets\ParameterTarget.cs</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">ParameterTarget</span> <span class="p">:</span> <span class="n">Target</span><span class="p">&lt;</span><span class="n">ParameterInfo</span><span class="p">&gt;</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="nf">ParameterTarget</span><span class="p">(</span><span class="n">MethodBase</span> <span class="n">method</span><span class="p">,</span> <span class="n">ParameterInfo</span> <span class="n">site</span><span class="p">)</span>
+    <span class="p">:</span> <span class="k">base</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">site</span><span class="p">)</span>
+  <span class="p">{</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+
+<span class="c1">// Ninject\src\Ninject\Planning\Targets\Target.cs</span>
+<span class="k">public</span> <span class="k">abstract</span> <span class="k">class</span> <span class="nc">Target</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="p">:</span> <span class="n">ITarget</span> <span class="k">where</span> <span class="n">T</span> <span class="p">:</span> <span class="n">ICustomAttributeProvider</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="kt">object</span> <span class="nf">ResolveWithin</span><span class="p">(</span><span class="n">IContext</span> <span class="n">parent</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="p">...</span>
+    <span class="kt">var</span> <span class="n">request</span> <span class="p">=</span> <span class="n">parent</span><span class="p">.</span><span class="n">Request</span><span class="p">.</span><span class="nf">CreateChild</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">Type</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="k">this</span><span class="p">);</span>
+    <span class="n">request</span><span class="p">.</span><span class="n">IsUnique</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">parent</span><span class="p">.</span><span class="n">Kernel</span><span class="p">.</span><span class="nf">Resolve</span><span class="p">(</span><span class="n">request</span><span class="p">).</span><span class="nf">SingleOrDefault</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>从这里可以看出，ninject会递归调用Kernel对象的Resolve()方法解析构造函数
+需要的参数。当解析完成后，我们就得到了一个参数对象，即在开头的例子中我们
+得到的是Sword对象。</p>
+
+<p>回到StandardProvider类的Create()方法中。当得到构造函数所需的所有参数对象
+后，这个方法调用directive的Injector()方法来创建我们的类。</p>
+
+<p>这里不介绍这个directive的Injector()方法的细节，我们只需要知道它会调用
+我们的类的构造函数，同时传入这个构造函数需要的参数对象，最后返回我们
+指定的对象。</p>
+
+  </div>
+
+  
+
+  <a class="u-url" href="/ninject/2018/03/19/ninject.part3.html" hidden></a>
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">读源码</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">
+            
+              读源码
+            
+            </li>
+            
+            <li><a class="u-email" href="mailto:ryanfzyw@gmail.com">ryanfzyw@gmail.com</a></li>
+            
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-2">
+        <ul class="social-media-list">
+  
+  
+  
+  <li><a href="https://github.com/ryanfzy"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg> <span class="username">ryanfzy</span></a></li>
+  
+  
+  
+  
+  
+  
+  
+</ul>
+
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>这里是一个关于阅读源码的网站，这里有我在阅读源码过程中做的笔记，希望这些笔记能对读到它们的人有帮助。 </p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>
