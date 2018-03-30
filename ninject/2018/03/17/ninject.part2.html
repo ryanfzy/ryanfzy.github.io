@@ -326,7 +326,9 @@ binding，所以该方法会先调用HandleMissingBinding()方法解决这个问
   <span class="k">private</span> <span class="kt">object</span> <span class="nf">ResolveInternal</span><span class="p">(</span><span class="kt">object</span> <span class="n">scope</span><span class="p">)</span>
   <span class="p">{</span>
     <span class="p">...</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">Request</span><span class="p">.</span><span class="n">ActiveBindings</span><span class="p">.</span><span class="nf">Push</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">Binding</span><span class="p">);</span>
     <span class="kt">var</span> <span class="n">reference</span> <span class="p">=</span> <span class="k">new</span> <span class="n">InstanceReference</span> <span class="p">{</span> <span class="n">Instance</span> <span class="p">=</span> <span class="k">this</span><span class="p">.</span><span class="nf">GetProvider</span><span class="p">().</span><span class="nf">Create</span><span class="p">(</span><span class="k">this</span><span class="p">)</span> <span class="p">};</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">Request</span><span class="p">.</span><span class="n">ActiveBindings</span><span class="p">.</span><span class="nf">Pop</span><span class="p">();</span>
     <span class="p">...</span>
     <span class="k">return</span> <span class="n">reference</span><span class="p">.</span><span class="n">Instance</span><span class="p">;</span>
   <span class="p">}</span>
